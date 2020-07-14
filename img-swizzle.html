@@ -1,138 +1,158 @@
 <html>
 <head>
-<script language="javascript">
-var inputFile = "";
-function readURL(input)
-{
-	var file = input.files[0];
-	var reader = new FileReader();
-	reader.onload = function (e) {
-		inputFile = e.target.result;
-            go();
-        }
-	reader.readAsDataURL(file);
-}
-function getIndex(element)
-{
-	var e = document.getElementById(element);
-	var choice = e.options[e.selectedIndex].value;
-	switch(choice)
+
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="shared/third-party/jquery/jquery-ui.min.css">
+	<script src="shared/third-party/jquery/external/jquery/jquery.js"></script>
+	<script src="shared/third-party/jquery/jquery-ui.min.js"></script>
+
+	<style>
+	body
 	{
-		case "R": return 0;
-		case "G": return 1;
-		case "B": return 2;
-		case "A": return 3;
-		default: 0;
+		font-family: 'Roboto', sans-serif;
+		padding:10px;
 	}
-}
+	.panel
+	{
+		border: 2px solid grey;
+		background-color:white;
+		padding:10px;
+		width:1020px;
+		overflow:hidden;
+		border-radius:10px;
+		padding-left:10px;
+		padding-right:10px;
+	}
+	#file_input
+	{
+		margin-left:30px;
+		border-left:2px solid grey;
+		margin-right:30px;
+		border-right:2px solid grey;
+		padding-left:36px;
+		padding-right:36px;
+		border-radius:0px;
+		max-width:280px;
+	}
+	#canvas
+	{
+		border : 1px solid black;
+		visibility:hidden;
+	}
+	</style>
 
-function go()
-{
-	var img = new Image();
-	img.src = inputFile;
-	var canvas = document.getElementById('canvas');
-	var ctx = canvas.getContext('2d');
-	img.onload = function() {
-		var maxHeight = 560;
-		var scaleFactor = (img.height > maxHeight)? (maxHeight / img.height) : 1.0;
+	<script language="javascript">
+	var inputFile = "";
+	var maxCanvasHeight = 560;
 
-		canvas.width = img.width * scaleFactor;
-		canvas.height = img.height* scaleFactor;
-		ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-		img.style.display = 'none';
+	function onBodyLoaded()
+	{
+		$("select").selectmenu({ width: "80px"}).on('selectmenuchange', function() { updateCanvas(); });
+		$("#scale_select").selectmenu({ width: "150px"});
+	}
 
-		var pixels = ctx.getImageData(0, 0, img.width, img.height);
-		var data = pixels.data;
-		var r_index = getIndex("r_select");
-		var g_index = getIndex("g_select");
-		var b_index = getIndex("b_select");
-		var a_index = getIndex("a_select");
+	function onFileSelected(file)
+	{
+		var reader = new FileReader();
+		reader.onload = function (e) { inputFile = e.target.result; updateCanvas(); }
+		reader.readAsDataURL(file);
+	}
 
-		for(var x = 0; x < img.width; ++x)
+	function updateCanvas()
+	{
+		// Grab canvas
+		var canvas = document.getElementById('canvas');
+		var ctx = canvas.getContext('2d');
+
+		// Load image
+		var img = new Image();
+		img.src = inputFile;
+		
+		// When image loaded...
+		img.onload = function()
 		{
-			var colIndex = (x * img.height * 4);
-			for(var y = 0; y < img.height; ++y)
+			// Hide image
+			img.style.display = 'none';
+
+			// Copy image to canvas
+			var canvasScaleFactor = (img.height > maxCanvasHeight)? (maxCanvasHeight / img.height) : 1.0;
+			canvas.width = img.width * canvasScaleFactor;
+			canvas.height = img.height* canvasScaleFactor;
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+			// Grab swizzle indices
+			var getSwizzleIndex = function(element)
 			{
-				var rowIndex = (y * 4);
-				var pixelIndex = colIndex + rowIndex;
-				var pixelCopy = [data[pixelIndex + 0], data[pixelIndex + 1], data[pixelIndex + 2] ,data[pixelIndex + 3]];
-
-				data[pixelIndex + 0] = pixelCopy[ r_index ];
-				data[pixelIndex + 1] = pixelCopy[ g_index ];
-				data[pixelIndex + 2] = pixelCopy[ b_index ];
-				data[pixelIndex + 3] = pixelCopy[ a_index ];
+				var e = document.getElementById(element); var choice = e.options[e.selectedIndex].value;
+				switch(choice) { case "R": return 0; case "G": return 1; case "B": return 2; case "A": return 3; }
 			}
-		}
-		ctx.putImageData(pixels, 0, 0, 0, 0, canvas.width, canvas.height);
-		canvas.style.visibility = "visible";
-	};
-}
-</script>
-<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-<style>
-body
-{
-	font-family: 'Roboto', sans-serif;
-}
+			var r_swizzleIndex = getSwizzleIndex("r_select");
+			var g_swizzleIndex = getSwizzleIndex("g_select");
+			var b_swizzleIndex = getSwizzleIndex("b_select");
+			var a_swizzleIndex = getSwizzleIndex("a_select");
 
-option
-{
-	font-family: 'Roboto', sans-serif;
-}
+			// Grab pixel buffer
+			var imageData = ctx.getImageData(0, 0, img.width, img.height);
+			var pixels = imageData.data;
 
-.panel
-{
-	border: 1px solid black;
-	background-color:white;
-	padding:10px;
-	width:680px;
-	overflow:hidden;
-	border-radius:10px;
-}
+			// Perform swizzle on pixel buffer
+			for(var x = 0; x < img.width; ++x)
+			{
+				var colIndex = (x * img.height * 4);
+				for(var y = 0; y < img.height; ++y)
+				{
+					var rowIndex = (y * 4);
+					var pixelIndex = colIndex + rowIndex;
+					var pixelCopy = [pixels[pixelIndex + 0], pixels[pixelIndex + 1], pixels[pixelIndex + 2], pixels[pixelIndex + 3]];
+					pixels[pixelIndex + 0] = pixelCopy[ r_swizzleIndex ]; // Swizzle R
+					pixels[pixelIndex + 1] = pixelCopy[ g_swizzleIndex ]; // Swizzle G
+					pixels[pixelIndex + 2] = pixelCopy[ b_swizzleIndex ]; // Swizzle B
+					pixels[pixelIndex + 3] = pixelCopy[ a_swizzleIndex ]; // Swizzle A
+				}
+			}
 
-.file_input
-{
-	margin-left:30px;
-	border-left:1px solid black;
-	padding-left:36px;
-}
-
-#canvas
-{
-	border : 1px solid black;
-	visibility:hidden;
-}
-</style>
+			// Store pixel buffer back to canvas
+			ctx.putImageData(imageData, 0, 0, 0, 0, canvas.width, canvas.height);
+			canvas.style.visibility = "visible";
+		};
+	}
+	</script>
 </head>
-<body>
-<div class="panel">
-R = <select name="r_select" id="r_select" onchange="go()">
-  <option value="R" selected="selected">R</option>
-  <option value="G">G</option>
-  <option value="B">B</option>
-  <option value="A">A</option>
-</select>
-G = <select name="g_select" id="g_select" onchange="go()">
-  <option value="R">R</option>
-  <option value="G" selected="selected">G</option>
-  <option value="B">B</option>
-  <option value="A">A</option>
-</select>
-B = <select name="b_select" id="b_select" onchange="go()">
-  <option value="R">R</option>
-  <option value="G">G</option>
-  <option value="B" selected="selected">B</option>
-  <option value="A">A</option>
-</select>
-A = <select name="a_select" id="a_select" onchange="go()">
-  <option value="R">R</option>
-  <option value="G">G</option>
-  <option value="B">B</option>
-  <option value="A" selected="selected">A</option>
-</select>
-<input type="file" class="file_input" id="file_input" onchange="readURL(this)"/>
-</div>
-<br/>
-<canvas id="canvas" width="0" height="0"></canvas>
+
+<body onload="onBodyLoaded()">
+	<div class="panel">
+		R = <select id="r_select">
+		<option value="R" selected="selected">R</option>
+		<option value="G">G</option>
+		<option value="B">B</option>
+		<option value="A">A</option>
+		</select>
+		G = <select id="g_select">
+		<option value="R">R</option>
+		<option value="G" selected="selected">G</option>
+		<option value="B">B</option>
+		<option value="A">A</option>
+		</select>
+		B = <select id="b_select">
+		<option value="R">R</option>
+		<option value="G">G</option>
+		<option value="B" selected="selected">B</option>
+		<option value="A">A</option>
+		</select>
+		A = <select id="a_select">
+		<option value="R">R</option>
+		<option value="G">G</option>
+		<option value="B">B</option>
+		<option value="A" selected="selected">A</option>
+		</select>
+		<input type="file" id="file_input" onchange="onFileSelected(this.files[0])"/>
+		Scaling = <select id="scale_select">
+			<option value="fit">Shrink to fit</option>
+			<option value="none">Original size</option>
+		</select>
+	</div>
+	<br/>
+	<canvas id="canvas" width="0" height="0"></canvas>
 </body>
+
 </html>
