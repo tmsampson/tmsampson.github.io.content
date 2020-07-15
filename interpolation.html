@@ -1,22 +1,18 @@
 <html>
 <head>
 
+	<meta charset="UTF-8">
 	<title>Interpolation</title>
+
+	<link rel="stylesheet" href="shared/shared.css">
+	<script src="shared/shared.js"></script>
+
 	<link rel="stylesheet" href="shared/third-party/jquery/jquery-ui.min.css">
 	<script src="shared/third-party/jquery/external/jquery/jquery.js"></script>
+	<script src="shared/third-party/jquery/jquery-line.js"></script>
 	<script src="shared/third-party/jquery/jquery-ui.min.js"></script>
 
 	<style>
-	@font-face
-	{
-		font-family: 'Roboto';
-		src: URL('shared/third-party/roboto/Roboto-Regular.ttf') format('truetype');
-	}
-	body
-	{
-		font-family: 'Roboto', sans-serif;
-		padding:10px;
-	}
 	.circle
 	{
 		width:100px;
@@ -25,6 +21,7 @@
 		taxt-align:middle;
 		cursor: -webkit-grab; cursor: grab;
 		font-weight:bold;
+		font-size:26px;
 		position:absolute;
 	}
 	.circleA
@@ -40,59 +37,73 @@
 	.circleA .label
 	{
 		position:relative;
-		left:35px;
-		top:40px;
+		left:28px;
+		top:34px;
 	}
 	.circleB .label
 	{
 		position:relative;
 		left:55px;
-		top:40px;
-	}
-	.noselect
-	{
-		-webkit-touch-callout: none; /* iOS Safari */
-		-webkit-user-select: none; /* Safari */
-		-khtml-user-select: none; /* Konqueror HTML */
-		-moz-user-select: none; /* Old versions of Firefox */
-		-ms-user-select: none; /* Internet Explorer/Edge */
-		user-select: none; /* Non-prefixed version, currently
-		supported by Chrome, Edge, Opera and Firefox */
+		top:35px;
 	}
 	</style>
 
 	<script language="javascript">
 	var draggingA = false, draggingB = false;
-	var circleA = null, circleB = null;
+	var circleA = null, circleB = null, line = null;
 	function onBodyLoaded()
 	{
-		circleA = $(".circleA"); circleB = $(".circleB");
+		circleA = $(".circleA"); circleB = $(".circleB"); line = document.getElementById("line");
 		circleA.draggable({ start: function() { draggingA = true; }, stop: function() { draggingA = false; } });
 		circleB.draggable({ start: function() { draggingB = true; }, stop: function() { draggingB = false; } });
 		setInterval(function() { onUpdate(); }, 16); // 60Hz
-	}
-	function move(circle, x, y)
-	{
-		circle.css({left: x, top: y});
 	}
 	function onUpdate()
 	{
 		if(!draggingA)
 		{
-			var aPos = circleA.position(); var aX = aPos.left; var aY = aPos.top;
-			var bPos = circleB.position(); var bX = bPos.left; var bY = bPos.top;
-			var deltaX = (aX - bX); var deltaY = (aY - bY);
-			var distance = Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
-			var speed = 0.02; var lag = 1.0 - speed;
-			var newX = (aX * lag) + (bX * speed);
-			var newY = (aY * lag) + (bY * speed);
-			move(circleA, newX, newY);
+			var posA = getPosition(circleA); var posB = getPosition(circleB);
+			var newPos = interpolateSpring(posA, posB); //interpolate(posA, posB);
+			setPosition(circleA, newPos[0], newPos[1]);
 		}
+
+		// Draw connecting line
+		var posA = getPosition(circleA); var posB = getPosition(circleB);
+		drawLine(line, posA[0] + 50, posA[1] + 50, posB[0] + 50, posB[1] + 50, { color:"grey", zindex:1, style:"dotted", stroke:5 });
+	}
+	function interpolate(posA, posB)
+	{
+		var deltaX = (posA[0] - posB[0]), deltaY = (posA[1] - posB[1]);
+		var speed = 0.02; var lag = 1.0 - speed;
+		var newX = (posA[0] * lag) + (posB[0] * speed);
+		var newY = (posA[1] * lag) + (posB[1] * speed);
+		return [ newX, newY ];
+	}
+	var velocity = [ 0, 0 ];
+	function interpolateSpring(posA, posB)
+	{
+		var mass = 0.1; gravity = 0;
+		var k = 2; var damping = 0.3;
+		var timeStep = (1.0 / 60.0);
+		var springForceX = -k * (posA[0] - posB[0]);
+		var springForceY = -k * (posA[1] - posB[1]);
+		var dampingForceX = damping * velocity[0];
+		var dampingForceY = damping * velocity[1];
+		var forceX = springForceX - dampingForceX;
+		var forceY = springForceY + mass * gravity - dampingForceY;
+		var accelerationX = forceX / mass;
+		var accelerationY = forceY / mass;
+		velocity[0] = velocity[0] + (accelerationX * timeStep);
+		velocity[1] = velocity[1] + (accelerationY * timeStep);
+		var newX = posA[0] + (velocity[0] * timeStep);
+		var newY = posA[1] + (velocity[1] * timeStep);
+		return [ newX, newY ];
 	}
 	</script>
 </head>
 
 <body onload="onBodyLoaded()">
+	<div id="line"></div>
 	<div class="circle circleA noselect"><div class="label">A</div></div><br/>
 	<div class="circle circleB noselect"><div class="label">B</div></div>
 </body>
