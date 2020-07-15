@@ -4,11 +4,11 @@
 	<meta charset="UTF-8">
 	<title>Image Swizzle</title>
 
-	<link rel="stylesheet" href="shared/shared.css">
+	<link rel="stylesheet" href="../shared/shared.css">
 	
-	<link rel="stylesheet" href="shared/third-party/jquery/jquery-ui.min.css">
-	<script src="shared/third-party/jquery/external/jquery/jquery.js"></script>
-	<script src="shared/third-party/jquery/jquery-ui.min.js"></script>
+	<link rel="stylesheet" href="../shared/third-party/jquery/jquery-ui.min.css">
+	<script src="../shared/third-party/jquery/external/jquery/jquery.js"></script>
+	<script src="../shared/third-party/jquery/jquery-ui.min.js"></script>
 
 	<style>
 	.panel
@@ -36,7 +36,6 @@
 	}
 	#canvas
 	{
-		border : 1px solid black;
 		visibility:hidden;
 	}
 	</style>
@@ -48,7 +47,7 @@
 	function onBodyLoaded()
 	{
 		$("select").selectmenu({ width: "80px"}).on('selectmenuchange', function() { updateCanvas(); });
-		$("#scale_select").selectmenu({ width: "150px"});
+		$("#scale_select").selectmenu({ width: "150px"}).on('selectmenuchange', function() { updateCanvas(); });
 	}
 
 	function onFileSelected(file)
@@ -75,7 +74,8 @@
 			img.style.display = 'none';
 
 			// Copy image to canvas
-			var canvasScaleFactor = (img.height > maxCanvasHeight)? (maxCanvasHeight / img.height) : 1.0;
+			var shrinkToFit = ($("#scale_select").val() == "shrink");
+			var canvasScaleFactor = (shrinkToFit && (img.height > maxCanvasHeight))? (maxCanvasHeight / img.height) : 1.0;
 			canvas.width = img.width * canvasScaleFactor;
 			canvas.height = img.height* canvasScaleFactor;
 			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -83,13 +83,12 @@
 			// Grab swizzle indices
 			var getSwizzleIndex = function(element)
 			{
-				var e = document.getElementById(element); var choice = e.options[e.selectedIndex].value;
-				switch(choice) { case "R": return 0; case "G": return 1; case "B": return 2; case "A": return 3; }
+				switch($(element).val()) { case "R": return 0; case "G": return 1; case "B": return 2; case "A": return 3; }
 			}
-			var r_swizzleIndex = getSwizzleIndex("r_select");
-			var g_swizzleIndex = getSwizzleIndex("g_select");
-			var b_swizzleIndex = getSwizzleIndex("b_select");
-			var a_swizzleIndex = getSwizzleIndex("a_select");
+			var r_swizzleIndex = getSwizzleIndex("#r_select");
+			var g_swizzleIndex = getSwizzleIndex("#g_select");
+			var b_swizzleIndex = getSwizzleIndex("#b_select");
+			var a_swizzleIndex = getSwizzleIndex("#a_select");
 
 			// Grab pixel buffer
 			var imageData = ctx.getImageData(0, 0, img.width, img.height);
@@ -147,8 +146,8 @@
 		</select>
 		<input type="file" id="file_input" onchange="onFileSelected(this.files[0])"/>
 		Scaling = <select id="scale_select">
-			<option value="fit">Shrink to fit</option>
-			<option value="none">Original size</option>
+			<option value="shrink">Shrink to fit</option>
+			<option value="original">Original size</option>
 		</select>
 	</div>
 	<br/>
