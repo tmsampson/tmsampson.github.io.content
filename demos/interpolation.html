@@ -2,7 +2,7 @@
 <head>
 
 	<meta charset="UTF-8">
-	<title>Physics Spring</title>
+	<title>Interpolation</title>
 
 	<link rel="stylesheet" href="../shared/shared.css">
 	<script src="../shared/shared.js"></script>
@@ -10,8 +10,6 @@
 	<link rel="stylesheet" href="../shared/third-party/jquery/jquery-ui.min.css">
 	<script src="../shared/third-party/jquery/external/jquery/jquery.js"></script>
 	<script src="../shared/third-party/jquery/jquery-ui.min.js"></script>
-
-	<!-- Reference: https://www.khanacademy.org/partner-content/pixar/simulation/hair-simulation-code/pi/step-4-2d-spring-mass-system -->
 
 	<style>
 	.circle
@@ -64,13 +62,9 @@
 		if(!draggingA)
 		{
 			var posA = getPosition(circleA); var posB = getPosition(circleB);
-			var newPos = interpolateSpring(posA, posB); //interpolate(posA, posB);
+			var newPos = interpolate(posA, posB);
 			setPosition(circleA, newPos[0], newPos[1]);
 		}
-
-		// Draw connecting line
-		var posA = getPosition(circleA); var posB = getPosition(circleB);
-		drawLine(line, posA[0] + 50, posA[1] + 50, posB[0] + 50, posB[1] + 50, { color:"#d0d0d0", zindex:1, style:"dotted", stroke:5 });
 	}
 	function interpolate(posA, posB)
 	{
@@ -80,31 +74,10 @@
 		var newY = (posA[1] * lag) + (posB[1] * speed);
 		return [ newX, newY ];
 	}
-	var velocity = [ 0, 0 ];
-	function interpolateSpring(posA, posB)
-	{
-		var mass = 0.1; gravity = 0;
-		var k = 2; var damping = 0.3;
-		var timeStep = (1.0 / 60.0);
-		var springForceX = -k * (posA[0] - posB[0]);
-		var springForceY = -k * (posA[1] - posB[1]);
-		var dampingForceX = damping * velocity[0];
-		var dampingForceY = damping * velocity[1];
-		var forceX = springForceX - dampingForceX;
-		var forceY = springForceY + mass * gravity - dampingForceY;
-		var accelerationX = forceX / mass;
-		var accelerationY = forceY / mass;
-		velocity[0] = velocity[0] + (accelerationX * timeStep);
-		velocity[1] = velocity[1] + (accelerationY * timeStep);
-		var newX = posA[0] + (velocity[0] * timeStep);
-		var newY = posA[1] + (velocity[1] * timeStep);
-		return [ newX, newY ];
-	}
 	</script>
 </head>
 
 <body onload="onBodyLoaded()">
-	<div id="line"></div>
 	<div class="circle circleA noselect"><div class="label">A</div></div><br/>
 	<div class="circle circleB noselect"><div class="label">B</div></div>
 </body>
