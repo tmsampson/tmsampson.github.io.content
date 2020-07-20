@@ -8,6 +8,7 @@ body
 {
 	font-family: 'Roboto', sans-serif;
 	padding:10px;
+	overflow:hidden;
 }
 
 .panel

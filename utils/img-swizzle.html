@@ -72,15 +72,20 @@
 			canvas.height = img.height* canvasScaleFactor;
 			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-			// Grab swizzle indices
-			var getSwizzleIndex = function(element)
+			// Grab swizzle selections
+			var r_select = $("#r_select").val(), g_select = $("#g_select").val(), b_select = $("#b_select").val(), a_select = $("#a_select").val();
+			var getSwizzleValue = function(pixel, select)
 			{
-				switch($(element).val()) { case "R": return 0; case "G": return 1; case "B": return 2; case "A": return 3; }
+				switch(select)
+				{
+					case "0": return 0;
+					case "1": return 255;
+					case "R": return pixel[0];
+					case "G": return pixel[1];
+					case "B": return pixel[2];
+					case "A": return pixel[3];
+				}
 			}
-			var r_swizzleIndex = getSwizzleIndex("#r_select");
-			var g_swizzleIndex = getSwizzleIndex("#g_select");
-			var b_swizzleIndex = getSwizzleIndex("#b_select");
-			var a_swizzleIndex = getSwizzleIndex("#a_select");
 
 			// Grab pixel buffer
 			var imageData = ctx.getImageData(0, 0, img.width, img.height);
@@ -95,10 +100,10 @@
 					var rowIndex = (y * 4);
 					var pixelIndex = colIndex + rowIndex;
 					var pixelCopy = [pixels[pixelIndex + 0], pixels[pixelIndex + 1], pixels[pixelIndex + 2], pixels[pixelIndex + 3]];
-					pixels[pixelIndex + 0] = pixelCopy[ r_swizzleIndex ]; // Swizzle R
-					pixels[pixelIndex + 1] = pixelCopy[ g_swizzleIndex ]; // Swizzle G
-					pixels[pixelIndex + 2] = pixelCopy[ b_swizzleIndex ]; // Swizzle B
-					pixels[pixelIndex + 3] = pixelCopy[ a_swizzleIndex ]; // Swizzle A
+					pixels[pixelIndex + 0] = getSwizzleValue(pixelCopy, r_select); // Swizzle R
+					pixels[pixelIndex + 1] = getSwizzleValue(pixelCopy, g_select); // Swizzle G
+					pixels[pixelIndex + 2] = getSwizzleValue(pixelCopy, b_select); // Swizzle B
+					pixels[pixelIndex + 3] = getSwizzleValue(pixelCopy, a_select); // Swizzle A
 				}
 			}
 
@@ -137,6 +142,8 @@
 					<option value="G">G</option>
 					<option value="B">B</option>
 					<option value="A">A</option>
+					<option value="0">0</option>
+					<option value="1">1</option>
 				</select>
 			</div>
 		</div>
@@ -148,6 +155,8 @@
 					<option value="G" selected="selected">G</option>
 					<option value="B">B</option>
 					<option value="A">A</option>
+					<option value="0">0</option>
+					<option value="1">1</option>
 				</select>
 			</div>
 		</div>
@@ -159,6 +168,8 @@
 					<option value="G">G</option>
 					<option value="B" selected="selected">B</option>
 					<option value="A">A</option>
+					<option value="0">0</option>
+					<option value="1">1</option>
 				</select>
 			</div>
 		</div>
@@ -170,6 +181,8 @@
 					<option value="G">G</option>
 					<option value="B">B</option>
 					<option value="A" selected="selected">A</option>
+					<option value="0">0</option>
+					<option value="1">1</option>
 				</select>
 			</div>
 		</div><br/>	
