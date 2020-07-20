@@ -25,6 +25,7 @@ body
 #panel
 {
 	overflow:hidden;
+	font-size:90%;
 }
 
 #panel h2
@@ -84,4 +85,18 @@ body
 {
 	background:#7f0036 !important;
 	border:1px solid #c5004a !important;
+}
+
+.links
+{
+	margin-top: -10px;
+	margin-bottom: 0px;
+	vertical-align: text-top;
+	font-size: 12px;
+}
+
+.links img
+{
+	position: relative;
+	top: 9px;
 }

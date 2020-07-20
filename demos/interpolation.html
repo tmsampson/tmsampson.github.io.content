@@ -64,8 +64,8 @@
 		initPanel("#panel", 330);
 		initSlider("#slider-speed", 0.0, 1.0, 0.05, 0.1);
 		circleA = $(".circleA"); circleB = $(".circleB"); line = document.getElementById("line");
-		circleA.draggable({ start: function() { draggingA = true; }, stop: function() { draggingA = false; } });
-		circleB.draggable({ start: function() { draggingB = true; }, stop: function() { draggingB = false; } });
+		circleA.draggable({ start: function() { draggingA = true; }, stop: function() { draggingA = false; }, scroll: false  });
+		circleB.draggable({ start: function() { draggingB = true; }, stop: function() { draggingB = false; }, scroll: false  });
 		setInterval(function() { onUpdate(); }, 16); // 60Hz
 	}
 	function onUpdate()
@@ -90,7 +90,10 @@
 
 <body onload="onBodyLoaded()">
 	<div id="panel" title="Interpolation">
-		<h2>Info</h2>
+		<h2>Links</h2>
+			<p class="links">Web: <a href="https://thomassampson.co.uk/tmsampson.github.io.content/demos/interpolation.html" target="_blank"><img src="../shared/img/link-icon.png"/></a> &nbsp;&nbsp;Source: <a href="https://github.com/tmsampson/tmsampson.github.io.content/blob/master/demos/interpolation.html" target="_blank"><img src="../shared/img/github-logo.png"/></a></p>
+		<br/>
+		<h2>Instructions</h2>
 		<p>Drag the circles around to move them<br/><br/></p>
 		<h2>Movement</h2>
 		<div class="row">
