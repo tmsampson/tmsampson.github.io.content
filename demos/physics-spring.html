@@ -29,11 +29,13 @@
 	{
 		border: 2px solid #7f003b;
 		color: #7f003b;
+		left:600px;
 	}
 	.circleB
 	{
 		border: 2px dashed #c5004a;
 		color: #c5004a;
+		left:600px;
 	}
 	.circleA .label
 	{
@@ -47,6 +49,11 @@
 		left:55px;
 		top:35px;
 	}
+	#panel .row .title
+	{
+		padding-top: 6px;
+		width: 55px;
+	}
 	</style>
 
 	<script language="javascript">
@@ -54,6 +61,11 @@
 	var circleA = null, circleB = null, line = null;
 	function onBodyLoaded()
 	{
+		initPanel("#panel", 330);
+		initSlider("#slider-mass", 0.0, 2.0, 0.05, 0.35);
+		initSlider("#slider-gravity", 0.0, 9.8, 0.2, 9.8);
+		initSlider("#slider-k", 0.0, 10.0, 0.5, 2.0);
+		initSlider("#slider-damping", 0.0, 2.0, 0.05, 0.3);
 		circleA = $(".circleA"); circleB = $(".circleB"); line = document.getElementById("line");
 		circleA.draggable({ start: function() { draggingA = true; }, stop: function() { draggingA = false; } });
 		circleB.draggable({ start: function() { draggingB = true; }, stop: function() { draggingB = false; } });
@@ -64,7 +76,7 @@
 		if(!draggingA)
 		{
 			var posA = getPosition(circleA); var posB = getPosition(circleB);
-			var newPos = interpolateSpring(posA, posB); //interpolate(posA, posB);
+			var newPos = interpolateSpring(posA, posB);
 			setPosition(circleA, newPos[0], newPos[1]);
 		}
 
@@ -72,19 +84,11 @@
 		var posA = getPosition(circleA); var posB = getPosition(circleB);
 		drawLine(line, posA[0] + 50, posA[1] + 50, posB[0] + 50, posB[1] + 50, { color:"#d0d0d0", zindex:1, style:"dotted", stroke:5 });
 	}
-	function interpolate(posA, posB)
-	{
-		var deltaX = (posA[0] - posB[0]), deltaY = (posA[1] - posB[1]);
-		var speed = 0.02; var lag = 1.0 - speed;
-		var newX = (posA[0] * lag) + (posB[0] * speed);
-		var newY = (posA[1] * lag) + (posB[1] * speed);
-		return [ newX, newY ];
-	}
 	var velocity = [ 0, 0 ];
 	function interpolateSpring(posA, posB)
 	{
-		var mass = 0.1; gravity = 0;
-		var k = 2; var damping = 0.3;
+		var mass = getSliderValue("#slider-mass"); gravity = getSliderValue("#slider-gravity") * 100;
+		var k = getSliderValue("#slider-k"); var damping = getSliderValue("#slider-damping");
 		var timeStep = (1.0 / 60.0);
 		var springForceX = -k * (posA[0] - posB[0]);
 		var springForceY = -k * (posA[1] - posB[1]);
@@ -104,6 +108,44 @@
 </head>
 
 <body onload="onBodyLoaded()">
+	<div id="panel" title="Interpolation">
+		<h2>Info</h2>
+		<p>Drag the circles around to move them<br/><br/></p>
+		<h2>Movement</h2>
+		<div class="row">
+			<div class="title">Mass:</div>
+			<div class="contents">
+				<div id="slider-mass" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+					<div id="custom-slider-handle" class="ui-slider-handle"></div>
+				</div>
+			</div>
+		</div><br/>
+			<div class="row">
+			<div class="title">Gravity:</div>
+			<div class="contents">
+				<div id="slider-gravity" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+					<div id="custom-slider-handle" class="ui-slider-handle"></div>
+				</div>
+			</div>
+		</div><br/>
+		<div class="row">
+			<div class="title">K:</div>
+			<div class="contents">
+				<div id="slider-k" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+					<div id="custom-slider-handle" class="ui-slider-handle"></div>
+				</div>
+			</div>
+		</div><br/>
+		<div class="row">
+			<div class="title">Damping:</div>
+			<div class="contents">
+				<div id="slider-damping" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+					<div id="custom-slider-handle" class="ui-slider-handle"></div>
+				</div>
+			</div>
+		</div><br/>
+	</div>
+
 	<div id="line"></div>
 	<div class="circle circleA noselect"><div class="label">A</div></div><br/>
 	<div class="circle circleB noselect"><div class="label">B</div></div>

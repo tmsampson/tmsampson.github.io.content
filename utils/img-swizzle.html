@@ -5,38 +5,29 @@
 	<title>Image Swizzle</title>
 
 	<link rel="stylesheet" href="../shared/shared.css">
-	
+	<script src="../shared/shared.js"></script>
+
 	<link rel="stylesheet" href="../shared/third-party/jquery/jquery-ui.min.css">
 	<script src="../shared/third-party/jquery/external/jquery/jquery.js"></script>
 	<script src="../shared/third-party/jquery/jquery-ui.min.js"></script>
 
 	<style>
-	.panel
+	#panel .row .title
 	{
-		border: 2px solid grey;
-		background-color:white;
-		padding:10px;
-		width:1020px;
-		overflow:hidden;
-		border-radius:10px;
-		padding-left:10px;
-		padding-right:10px;
+		padding-top: 6px;
+		width: 55px;
 	}
 	#file_input
 	{
-		font-family: 'Roboto', sans-serif;
-		margin-left:30px;
-		border-left:2px solid grey;
-		margin-right:30px;
-		border-right:2px solid grey;
-		padding-left:36px;
-		padding-right:36px;
-		border-radius:0px;
-		max-width:280px;
+		font-size: small;
+		max-width: 216px;
 	}
 	#canvas
 	{
-		visibility:hidden;
+		visibility: hidden;
+		position: absolute;
+		top: 20px;
+		left: 298px;
 	}
 	</style>
 
@@ -46,6 +37,7 @@
 
 	function onBodyLoaded()
 	{
+		initPanel("#panel", 250);
 		$("select").selectmenu({ width: "80px"}).on('selectmenuchange', function() { updateCanvas(); });
 		$("#scale_select").selectmenu({ width: "150px"}).on('selectmenuchange', function() { updateCanvas(); });
 	}
@@ -119,37 +111,84 @@
 </head>
 
 <body onload="onBodyLoaded()">
-	<div class="panel">
+	<div id="panel" title="Image Swizzle">
+		<h2>File</h2>
+		<div class="row">
+			<input type="file" id="file_input" onchange="onFileSelected(this.files[0])"/>
+		</div>
+		<br/>
+		<h2>Misc</h2>
+		<div class="row">
+			<div class="title">Scaling:</div>
+			<div class="contents">
+				<select id="scale_select">
+					<option value="shrink">Shrink to fit</option>
+					<option value="original">Original size</option>
+				</select>
+			</div>
+		</div>
+		<br/>
+		<h2>Swizzling</h2>
+		<div class="row">
+			<div class="title">R:</div>
+			<div class="contents">
+				<select id="r_select">
+					<option value="R" selected="selected">R</option>
+					<option value="G">G</option>
+					<option value="B">B</option>
+					<option value="A">A</option>
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="title">G:</div>
+			<div class="contents">
+				<select id="g_select">
+					<option value="R">R</option>
+					<option value="G" selected="selected">G</option>
+					<option value="B">B</option>
+					<option value="A">A</option>
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="title">B:</div>
+			<div class="contents">
+				<select id="b_select">
+					<option value="R">R</option>
+					<option value="G">G</option>
+					<option value="B" selected="selected">B</option>
+					<option value="A">A</option>
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="title">A:</div>
+			<div class="contents">
+				<select id="a_select">
+					<option value="R">R</option>
+					<option value="G">G</option>
+					<option value="B">B</option>
+					<option value="A" selected="selected">A</option>
+				</select>
+			</div>
+		</div><br/>	
+	</div>
+
+	<!--<div class="panel" style="width:1020px">
 		R = <select id="r_select">
 		<option value="R" selected="selected">R</option>
 		<option value="G">G</option>
 		<option value="B">B</option>
 		<option value="A">A</option>
 		</select>
-		G = <select id="g_select">
-		<option value="R">R</option>
-		<option value="G" selected="selected">G</option>
-		<option value="B">B</option>
-		<option value="A">A</option>
-		</select>
-		B = <select id="b_select">
-		<option value="R">R</option>
-		<option value="G">G</option>
-		<option value="B" selected="selected">B</option>
-		<option value="A">A</option>
-		</select>
-		A = <select id="a_select">
-		<option value="R">R</option>
-		<option value="G">G</option>
-		<option value="B">B</option>
-		<option value="A" selected="selected">A</option>
-		</select>
+		
 		<input type="file" id="file_input" onchange="onFileSelected(this.files[0])"/>
 		Scaling = <select id="scale_select">
 			<option value="shrink">Shrink to fit</option>
 			<option value="original">Original size</option>
 		</select>
-	</div>
+	</div> -->
 	<br/>
 	<canvas id="canvas" width="0" height="0"></canvas>
 </body>

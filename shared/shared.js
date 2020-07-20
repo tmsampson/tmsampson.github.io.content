@@ -1,3 +1,19 @@
+function initPanel(selector, width)
+{
+	$(selector).dialog({ width: width, closeOnEscape: false }); $(".ui-dialog").offset({ top: 20, left: 20 });
+}
+
+function initSlider(selector, min, max, step, val)
+{
+	var handle = $(selector + " #custom-slider-handle");
+	$(selector).slider({ min: min, max: max, step: step, value: val, create: function() { handle.text($(this).slider("value")); }, slide: function(event, ui) { handle.text(ui.value); }});
+}
+
+function getSliderValue(selector)
+{
+	return $(selector).slider("option", "value");
+}
+
 function getPosition(element)
 {
 	var pos = element.position();

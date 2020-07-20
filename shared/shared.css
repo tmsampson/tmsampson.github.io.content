@@ -10,6 +10,45 @@ body
 	padding:10px;
 }
 
+.panel
+{
+	border: 2px solid grey;
+	background-color:white;
+	padding:10px;
+	overflow:hidden;
+	border-radius:10px;
+	padding-left:10px;
+	padding-right:10px;
+}
+
+#panel
+{
+	overflow:hidden;
+}
+
+#panel h2
+{
+	font-size: 16px;
+	font-weight: bold;
+	color: #7f0036;
+	padding-bottom: 3px;
+	border-bottom: 1px solid grey;
+}
+
+#panel .row
+{
+	margin-top: 10px;
+}
+
+#panel .row .title
+{
+	float: left;
+	clear: right;
+	text-align: right;
+	margin-right: 10px;
+	font-size: 14px;
+}
+
 .noselect
 {
 	-webkit-touch-callout: none; /* iOS Safari */
@@ -18,4 +57,30 @@ body
 	-moz-user-select: none; /* Old versions of Firefox */
 	-ms-user-select: none; /* Internet Explorer/Edge */
 	user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+.ui-dialog-titlebar-close
+{
+	visibility: hidden;
+}
+
+.ui-widget
+{
+	font-size: 0.9em !important;
+}
+
+#custom-slider-handle
+{
+	width: 3em;
+	height: 1.6em;
+	top: 50%;
+	margin-top: -.8em;
+	text-align: center;
+	line-height: 1.6em;
+}
+
+.ui-state-active
+{
+	background:#7f0036 !important;
+	border:1px solid #c5004a !important;
 }
