@@ -1,11 +1,18 @@
 // -------------------------------------------------------------------------------------------------------------------------
-// Registration
-circuit.components.nand = {	name: "nand" };
-circuit.components.factory.register(circuit.components.nand.name, circuit.components.nand.create);
+// Import
+import { register } from '../components.js';
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Constants
+export const name = 'nand';
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Register
+register(name, create);
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Create per-instance data
-circuit.components.nand.create = function()
+function create()
 {
 	return { inputs: [ false, false ], outputs: [false] };
 }

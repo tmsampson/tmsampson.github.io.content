@@ -1,15 +1,17 @@
 // -------------------------------------------------------------------------------------------------------------------------
-// Init
-circuit.components = { };
-
-// -------------------------------------------------------------------------------------------------------------------------
-// Factory | Init
-circuit.components.factory = { createFuncs: { } };
+// Globals
+var createFuncs = { };
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Factory | Registration
-circuit.components.factory.register = function(name, createFunc)
+function register(name, createFunc)
 {
-	circuit.components.factory.createFuncs[name] = createFunc;
+	createFuncs[name] = createFunc;
 	console.log("Registering component: " + name);
 };
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Exports
+export { register }
+
+// -------------------------------------------------------------------------------------------------------------------------
