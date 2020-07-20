@@ -52,7 +52,7 @@
 	#panel .row .title
 	{
 		padding-top: 6px;
-		width: 55px;
+		width: 135px;
 	}
 	</style>
 
@@ -61,7 +61,7 @@
 	var circleA = null, circleB = null, line = null;
 	function onBodyLoaded()
 	{
-		initPanel("#panel", 330);
+		initPanel("#panel", 410);
 		initSlider("#slider-mass", 0.0, 2.0, 0.05, 0.35);
 		initSlider("#slider-gravity", 0.0, 9.8, 0.2, 9.8);
 		initSlider("#slider-k", 0.0, 10.0, 0.5, 2.0);
@@ -115,7 +115,7 @@
 		<div class="row">
 			<div class="title">Mass:</div>
 			<div class="contents">
-				<div id="slider-mass" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+				<div id="slider-mass" style="width:200px; margin-left:160px; position: relative; top: 8px;">
 					<div id="custom-slider-handle" class="ui-slider-handle"></div>
 				</div>
 			</div>
@@ -123,23 +123,23 @@
 			<div class="row">
 			<div class="title">Gravity:</div>
 			<div class="contents">
-				<div id="slider-gravity" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+				<div id="slider-gravity" style="width:200px; margin-left:160px; position: relative; top: 8px;">
 					<div id="custom-slider-handle" class="ui-slider-handle"></div>
 				</div>
 			</div>
 		</div><br/>
 		<div class="row">
-			<div class="title">K:</div>
+			<div class="title">Spring Constant (K):</div>
 			<div class="contents">
-				<div id="slider-k" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+				<div id="slider-k" style="width:200px; margin-left:160px; position: relative; top: 8px;">
 					<div id="custom-slider-handle" class="ui-slider-handle"></div>
 				</div>
 			</div>
 		</div><br/>
 		<div class="row">
-			<div class="title">Damping:</div>
+			<div class="title">Spring Damping:</div>
 			<div class="contents">
-				<div id="slider-damping" style="width:200px; margin-left:80px; position: relative; top: 8px;">
+				<div id="slider-damping" style="width:200px; margin-left:160px; position: relative; top: 8px;">
 					<div id="custom-slider-handle" class="ui-slider-handle"></div>
 				</div>
 			</div>
