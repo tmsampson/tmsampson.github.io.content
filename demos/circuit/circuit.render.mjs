@@ -1,20 +1,21 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
-import { register } from '../components.js';
-
-// -------------------------------------------------------------------------------------------------------------------------
-// Constants
-export const name = 'nand';
+import * as circuit from "./circuit.logic.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Register
-register(name, create);
+circuit.registerRenderer({
+	name: "circuit_base_renderer",
+	description: "Circuit base renderer",
+	version: "1.0.0.0",
+	create: () => new CircuitCanvasRenderer()
+});
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Create per-instance data
-function create()
+// Implementation
+class CircuitCanvasRenderer
 {
-	return { inputs: [ false, false ], outputs: [false] };
+	init() { }
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

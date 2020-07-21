@@ -1,17 +1,30 @@
 // -------------------------------------------------------------------------------------------------------------------------
-// Globals
-var createFuncs = { };
+// Import
+import * as circuit from "../../circuit.logic.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Factory | Registration
-function register(name, createFunc)
+// Register
+circuit.registerComponent({
+	name: "power_source",
+	description: "Power source",
+	version: "1.0.0.0",
+	create: () => new PowerSource()
+});
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Implementation
+class PowerSource
 {
-	createFuncs[name] = createFunc;
-	console.log("Registering component: " + name);
-};
+	constructor()
+	{
+		this.inputs = [ ];
+		this.outputs = [true];
+	}
 
-// -------------------------------------------------------------------------------------------------------------------------
-// Exports
-export { register }
+	update()
+	{
+		this.outputs[0] = true;
+	}
+}
 
 // -------------------------------------------------------------------------------------------------------------------------

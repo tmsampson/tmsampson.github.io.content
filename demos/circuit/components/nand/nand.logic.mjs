@@ -1,20 +1,30 @@
 // -------------------------------------------------------------------------------------------------------------------------
-// Load engine
-import * as components from './components/components.js';
+// Import
+import * as circuit from "../../circuit.logic.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Load components
-import * as componentImports from './components/componentImports.js';
+// Register
+circuit.registerComponent({
+	name: "nand",
+	description: "Nand gate",
+	version: "1.0.0.0",
+	create: () => new Nand()
+});
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Constants
-export const version = "1.0.0.0";
-
-// -------------------------------------------------------------------------------------------------------------------------
-// Init
-var circuit =
+// Implementation
+class Nand
 {
-	version: "1.0.0.0"
-};
+	constructor()
+	{
+		this.inputs = [ false, false ];
+		this.outputs = [false];
+	}
+
+	update()
+	{
+		this.outputs[0] = !(this.inputs[0] && this.inputs[1]);
+	}
+}
 
 // -------------------------------------------------------------------------------------------------------------------------
