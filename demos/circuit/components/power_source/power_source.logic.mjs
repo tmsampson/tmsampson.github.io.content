@@ -1,11 +1,12 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
-import * as circuit from "../../circuit.logic.mjs";
+import * as circuit from "../../js/circuit.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Register
 circuit.registerComponent({
 	name: "power_source",
+	category: "basic",
 	description: "Power source",
 	version: "1.0.0.0",
 	create: () => new PowerSource()

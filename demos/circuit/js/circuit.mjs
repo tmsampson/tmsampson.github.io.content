@@ -5,44 +5,49 @@ export const version = "1.0.0.0";
 // -------------------------------------------------------------------------------------------------------------------------
 // Registry
 var componentRegistry = { };
-var rendererRegistry = { };
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Renderer
+var rendererDescriptor = null;
 var renderer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
-window.onload = function()
+async function init()
 {
-	// For now, create and init first registered renderer
-	// NOTE: May allow selecting/swapping renderer later
-	for(var rendererName in rendererRegistry)
+	// Create and load registered renderer (optional)
+	if(rendererDescriptor != null)
 	{
-		var rendererDescriptor = rendererRegistry[rendererName];
 		var result = createRenderer(rendererDescriptor);
 		if(result.value)
 		{
 			renderer = result.value;
-			renderer.init();
-			break;
+			if(!await renderer.load())
+			{
+				console.error(`Renderer ${rendererDescriptor.name} failed to load`);
+			}
 		}
 		else
 		{
 			console.error(result.message);
 		}
 	}
+}
 
-	// Test
-	var result = createComponent(componentRegistry["nand"]);
-	if(!result.value)
+// -------------------------------------------------------------------------------------------------------------------------
+// Workspace
+function createWorkspace(name)
+{
+	var workspace = null;
+
+	// Bind renderer (optional)
+	if(renderer != null)
 	{
-		console.error(result.message);
-		return;
+		renderer.bindWorkspace(workspace);
 	}
-	var c = result.value;
-	c.update();
-};
+
+	return workspace;
+}
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Components
@@ -120,26 +125,21 @@ function createComponent(descriptor)
 // Renderer
 function registerRenderer(descriptor)
 {
-	// Check to ensure this renderer is not already registered
-	var rendererName = descriptor.name;
-	if(rendererRegistry.hasOwnProperty(rendererName))
-	{
-		console.error(`Renderer '${componentName}' already registered`);
-		return;
-	}
-
-	// Add to registry
-	rendererRegistry[rendererName] = descriptor;
-	console.log(`Registering renderer: ${rendererName}`);
+	console.log(`Registering renderer: ${descriptor.name}`);
+	rendererDescriptor = descriptor;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
 function validateRenderer(renderer)
 {
-	if(!(typeof renderer.init === 'function'))
+	if(!(typeof renderer.load === 'function'))
 	{
 		return { value: false, message: "Renderer has no init function" };
+	}
+	if(!(typeof renderer.bindWorkspace === 'function'))
+	{
+		return { value: false, message: "Renderer has no bindWorkspace function" };
 	}
 	return { value: true, message: "" };
 }
@@ -148,15 +148,8 @@ function validateRenderer(renderer)
 
 function createRenderer(descriptor)
 {
-	// Check to ensure this component is registered
-	var rendererName = descriptor.name;
-	if(!rendererRegistry.hasOwnProperty(rendererName))
-	{
-		return { value: null, message: `Renderer ${rendererName} has not been registered` };
-	}
-
 	// Create component instance and set name
-	var renderer = rendererRegistry[rendererName].create();
+	var renderer = descriptor.create();
 	if(renderer == null)
 	{
 		return { value: null, message: `Renderer ${rendererName} has not been registered` };
@@ -178,6 +171,6 @@ function createRenderer(descriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { registerComponent, registerRenderer }
+export { init, registerComponent, registerRenderer, createWorkspace }
 
 // -------------------------------------------------------------------------------------------------------------------------

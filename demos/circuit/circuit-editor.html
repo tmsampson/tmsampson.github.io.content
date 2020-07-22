@@ -1,0 +1,20 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Circuit Editor</title>
+
+		<!-- Load circuit editor -->
+		<script type="module" src="js/circuit.editor.mjs"></script>
+
+		<!-- Load components -->
+		<script type="module" src="components/nand/nand.logic.mjs"></script>
+		<script type="module" src="components/power_source/power_source.logic.mjs"></script>
+	</head>
+	<body>
+		<div id="editor_toolbar" title="Toolbar"></div>
+		<div id="editor_component_picker" title="Components"></div>
+		<div id="circuit_canvas_wrapper">
+			<canvas id="circuit_canvas" resize></canvas>
+		</div>
+	</body>
+</html>

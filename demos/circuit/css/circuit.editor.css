@@ -1,0 +1,17 @@
+body
+{
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+}
+
+#circuit_canvas_wrapper
+{
+	margin:0px;
+	padding:0px;
+}
+
+#circuit_canvas
+{
+	width:100%;
+}
