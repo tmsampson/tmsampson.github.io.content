@@ -1,50 +1,150 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
 import * as circuit from "./circuit.mjs";
-import * as circuit_utils from "./circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Config
-const paperLib = "third-party/paperjs/paper-full.js"
+// Registration
+var rendererDescriptor = null;
+var renderer = null;
+var widgetRegistry = { }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Register
-circuit.registerRenderer({
-	name: "circuit_canvas_renderer",
-	description: "Circuit canvas renderer",
-	version: "1.0.0.0",
-	create: () => new CircuitCanvasRenderer()
-});
 
-// -------------------------------------------------------------------------------------------------------------------------
-// Implementation
-class CircuitCanvasRenderer
+function registerRenderer(descriptor)
 {
-	async load()
+	// Store renderer descriptor
+	// NOTE: Renderers can register quite early in the startup process, so we store off the descriptor
+	//       and defer instance creation until the proper initialisation stage
+	console.log(`Registering renderer: ${descriptor.name}`);
+	rendererDescriptor = descriptor;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+async function init()
+{
+	console.log("Initialising render layer");
+	
+	// Create renderer (optional)
+	if(rendererDescriptor)
 	{
-		// Load PaperJS dynamically (cannot currently be imported as ES module)
-		return await circuit_utils.loadScript(paperLib);
+		var rendererName = rendererDescriptor.name;
+		console.log(`Initialising renderer: ${rendererName}`);
+		var result = createRenderer(rendererDescriptor);
+		if(result.value)
+		{
+			renderer = result.value;
+			if(!await renderer.load())
+			{
+				console.error(`Renderer ${rendererDescriptor.name} failed to load`);
+				return false;
+			}
+		}
+		else
+		{
+			console.error(result.message);
+			return false;
+		}
+	}
+	else
+	{
+		console.log("No registered renderers")
+		return false;
 	}
 
-	bindWorkspace(workspace)
+	// Initialise registered widgets
+	initWidgets();
+	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateRenderer(renderer)
+{
+	if(!(typeof renderer.load === 'function'))
 	{
-		// Get a reference to the canvas object
-		var canvas = document.getElementById("circuit_canvas");
-		// Create an empty project and a view for the canvas:
-		paper.setup(canvas);
-		// Create a Paper.js Path to draw a line into it:
-		var path = new paper.Path();
-		// Give the stroke a color
-		path.strokeColor = 'black';
-		var start = new paper.Point(400, 400);
-		// Move to start and draw a line from there
-		path.moveTo(start);
-		// Note that the plus operator on Point objects does not work
-		// in JavaScript. Instead, we need to call the add() function:
-		path.lineTo(start.add([ 200, -50 ]));
-		// Draw the view now:
-		paper.view.draw();
+		return { value: false, message: "Renderer has no init function" };
+	}
+	if(!(typeof renderer.createWorkspace === 'function'))
+	{
+		return { value: false, message: "Renderer has no createWorkspace function" };
+	}
+	return { value: true, message: "" };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function createRenderer(descriptor)
+{
+	// Create component instance and set name
+	var renderer = descriptor.create();
+	if(renderer == null)
+	{
+		return { value: null, message: `Renderer ${rendererName} has not been registered` };
+	}
+
+	// Store descriptor onto renderer
+	renderer.descriptor = descriptor;
+
+	// Validate renderer instance
+	var validationResult = validateRenderer(renderer);
+	if(!validationResult.value)
+	{
+		return { value: null, message: validationResult.message };
+	}
+
+	// Component successfully created
+	return { value: renderer, message: "" };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function getRenderer()
+{
+	return renderer;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Widgets
+function registerComponentWidget(widgetDescriptor)
+{
+	// Check to ensure that a widget for this component is not already registered
+	var componentName = widgetDescriptor.name;
+	if(widgetRegistry.hasOwnProperty(componentName))
+	{
+		console.error(`Widget for component '${componentName}' already registered`);
+		return;
+	}
+
+	// Add to registry
+	widgetRegistry[componentName] = widgetDescriptor;
+	console.log(`Registering widget: ${componentName}`);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function initWidgets()
+{
+	// For each registered widget....
+	for (var widgetName in widgetRegistry)
+	{
+		// Check to find a component with a name matching the one provided by the widget
+		var componentDescriptor = circuit.getComponentDescriptor(widgetName);
+		if(componentDescriptor == null)
+		{
+			console.error(`Could not find matching component for '${widgetName}' widget`);
+			return;
+		}
+
+		// Create widget renderer and inject into component descriptor
+		var widgetDescriptor = widgetRegistry[widgetName];
+		componentDescriptor.widget = widgetDescriptor.create();
+
+		// Store descriptor onto widget
+		componentDescriptor.widget.descriptor = widgetDescriptor;
 	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Exports
+export { registerRenderer, registerComponentWidget, init, getRenderer }

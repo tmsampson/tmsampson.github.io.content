@@ -1,4 +1,8 @@
 // -------------------------------------------------------------------------------------------------------------------------
+// Imports
+import * as circuit_render from "./circuit.render.mjs"
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Constants
 export const version = "1.0.0.0";
 
@@ -7,43 +11,30 @@ export const version = "1.0.0.0";
 var componentRegistry = { };
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Renderer
-var rendererDescriptor = null;
+// Rendering (optional)
 var renderer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
 async function init()
 {
-	// Create and load registered renderer (optional)
-	if(rendererDescriptor != null)
+	// Initialise and load render later (optional)
+	if(await circuit_render.init())
 	{
-		var result = createRenderer(rendererDescriptor);
-		if(result.value)
-		{
-			renderer = result.value;
-			if(!await renderer.load())
-			{
-				console.error(`Renderer ${rendererDescriptor.name} failed to load`);
-			}
-		}
-		else
-		{
-			console.error(result.message);
-		}
+		renderer = circuit_render.getRenderer();
 	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Workspace
-function createWorkspace(name)
+function createWorkspace(name, renderContainer)
 {
 	var workspace = null;
 
 	// Bind renderer (optional)
-	if(renderer != null)
+	if(renderer != null && renderContainer != null)
 	{
-		renderer.bindWorkspace(workspace);
+		renderer.createWorkspace(workspace, renderContainer);
 	}
 
 	return workspace;
@@ -51,10 +42,10 @@ function createWorkspace(name)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Components
-function registerComponent(descriptor)
+function registerComponent(componentDescriptor)
 {
 	// Check to ensure this component is not already registered
-	var componentName = descriptor.name;
+	var componentName = componentDescriptor.name;
 	if(componentRegistry.hasOwnProperty(componentName))
 	{
 		console.error(`Component '${componentName}' already registered`);
@@ -62,7 +53,7 @@ function registerComponent(descriptor)
 	}
 
 	// Add to registry
-	componentRegistry[componentName] = descriptor;
+	componentRegistry[componentName] = componentDescriptor;
 	console.log(`Registering component: ${componentName}`);
 };
 
@@ -73,6 +64,14 @@ function validateComponent(component)
 	if(!component.hasOwnProperty("descriptor"))
 	{
 		return { value: false, message: "Component has no descriptor" };
+	}
+	if(!component.descriptor.hasOwnProperty("name"))
+	{
+		return { value: false, message: "Component has no name" };
+	}
+	if(!component.descriptor.hasOwnProperty("category"))
+	{
+		return { value: false, message: "Component has no category" };
 	}
 	if(!component.hasOwnProperty("inputs"))
 	{
@@ -122,55 +121,29 @@ function createComponent(descriptor)
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Renderer
-function registerRenderer(descriptor)
+
+function getComponentDescriptor(componentName)
 {
-	console.log(`Registering renderer: ${descriptor.name}`);
-	rendererDescriptor = descriptor;
+	// Check to ensure this component is not already registered
+	if(!componentRegistry.hasOwnProperty(componentName))
+	{
+		console.error(`Could not find descriptor for component '${componentName}'`);
+		return null;
+	}
+
+	// Return descriptor
+	return componentRegistry[componentName];
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function validateRenderer(renderer)
+function getComponentRegistry()
 {
-	if(!(typeof renderer.load === 'function'))
-	{
-		return { value: false, message: "Renderer has no init function" };
-	}
-	if(!(typeof renderer.bindWorkspace === 'function'))
-	{
-		return { value: false, message: "Renderer has no bindWorkspace function" };
-	}
-	return { value: true, message: "" };
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-function createRenderer(descriptor)
-{
-	// Create component instance and set name
-	var renderer = descriptor.create();
-	if(renderer == null)
-	{
-		return { value: null, message: `Renderer ${rendererName} has not been registered` };
-	}
-
-	// Store descriptor onto renderer
-	renderer.descriptor = descriptor;
-
-	// Validate renderer instance
-	var validationResult = validateRenderer(renderer);
-	if(!validationResult.value)
-	{
-		return { value: null, message: validationResult.message };
-	}
-
-	// Component successfully created
-	return { value: renderer, message: "" };
+	return componentRegistry;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { init, registerComponent, registerRenderer, createWorkspace }
+export { init, registerComponent, createWorkspace, createComponent, getComponentRegistry, getComponentDescriptor }
 
 // -------------------------------------------------------------------------------------------------------------------------

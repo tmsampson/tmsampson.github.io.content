@@ -4,17 +4,20 @@
 		<title>Circuit Editor</title>
 
 		<!-- Load circuit editor -->
-		<script type="module" src="js/circuit.editor.mjs"></script>
+		<script type="module" src="circuit.editor.mjs"></script>
 
-		<!-- Load components -->
+		<!-- Load component logic -->
 		<script type="module" src="components/nand/nand.logic.mjs"></script>
 		<script type="module" src="components/power_source/power_source.logic.mjs"></script>
+
+		<!-- Load component widgets -->
+		<script type="module" src="components/nand/nand.widget.mjs"></script>
+		<script type="module" src="components/power_source/power_source.widget.mjs"></script>
 	</head>
 	<body>
 		<div id="editor_toolbar" title="Toolbar"></div>
 		<div id="editor_component_picker" title="Components"></div>
-		<div id="circuit_canvas_wrapper">
-			<canvas id="circuit_canvas" resize></canvas>
+		<div id="editor_canvas">
 		</div>
 	</body>
 </html>

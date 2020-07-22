@@ -1,29 +1,27 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
-import * as circuit from "../../js/circuit.mjs";
+import * as circuit_render from "../../js/circuit.render.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Register
-circuit.registerComponent({
-	name: "power_source",
-	description: "'Always On' Power source",
+circuit_render.registerComponentWidget({
+	name: "nand",
+	displayName: "NAND",
+	description: "Nand gate",
+	category: "Basic",
+	imageIcon: "nand_icon.png",
+	imageDisplay: "nand_display.png",
 	version: "1.0.0.0",
-	create: () => new PowerSource()
+	create: () => new NandRenderer()
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Implementation
-class PowerSource
+class NandRenderer
 {
 	constructor()
 	{
-		this.inputs = [ ];
-		this.outputs = [true];
-	}
-
-	update()
-	{
-		this.outputs[0] = true;
+		
 	}
 }
 

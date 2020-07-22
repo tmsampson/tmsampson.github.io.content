@@ -1,29 +1,27 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
-import * as circuit from "../../js/circuit.mjs";
+import * as circuit_render from "../../js/circuit.render.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Register
-circuit.registerComponent({
+circuit_render.registerComponentWidget({
 	name: "power_source",
+	displayName: "Power Source",
 	description: "'Always On' Power source",
+	category: "Basic",
+	imageIcon: "power_source_icon.png",
+	imageDisplay: "power_source_display.png",
 	version: "1.0.0.0",
-	create: () => new PowerSource()
+	create: () => new PowerSourceRenderer()
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Implementation
-class PowerSource
+class PowerSourceRenderer
 {
 	constructor()
 	{
-		this.inputs = [ ];
-		this.outputs = [true];
-	}
-
-	update()
-	{
-		this.outputs[0] = true;
+		
 	}
 }
 
