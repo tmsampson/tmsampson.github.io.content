@@ -6,7 +6,7 @@ import * as circuit_utils from "./js/circuit.utils.mjs";
 // -------------------------------------------------------------------------------------------------------------------------
 // Import canvas renderer
 // NOTE: The editor doesn't interface with this directly, but we need to ensure it gets loaded (and registered)
-import * as circuit_canvas from "../renderers/circuit.render.canvas.mjs";
+import * as circuit_canvas from "./renderers/circuit.render.canvas.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // External dependencies
