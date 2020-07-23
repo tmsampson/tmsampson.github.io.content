@@ -28,6 +28,11 @@ var componentPicker = null, toolbar = null;
 var workspace = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
+// UI
+var draggingComponentPickerItem = null;
+var draggingComponentPickerItemIcon = null;
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Init
 window.onload = function()
 {
@@ -57,8 +62,9 @@ async function init()
 	var canvasContainer = $("#editor_canvas_container");
 	workspace = circuit.createWorkspace("editor", canvasContainer);
 
-	// Bind canvas events
+	// Bind mouse events
 	$("#editor_canvas_container canvas").mouseup(() => onCanvasMouseUp());
+	$(document).on('mousemove', (e) => onMouseMove(e));
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -81,21 +87,22 @@ function initComponentPicker()
 	var componentDescriptors = Object.values(componentRegistry);
 	componentDescriptors.sort((a, b) => (a.category > b.category) ? 1 : ((b.category > a.category) ? -1 : 0));
 
-	// Populate components picker with component widgets
+	// Populate components picker with components
 	var currentCategory = "", firstCategory = true;
 	for (var i = 0; i < componentDescriptors.length; ++i)
 	{
 		var componentDescriptor = componentDescriptors[i];
 
 		// Ignore components without a widget
-		var componentWidget = componentDescriptor.widget;
-		if(componentWidget == null)
+		var widget = componentDescriptor.widget;
+		if(widget == null)
 		{
 			continue;
 		}
 
 		// Create category header?
-		var category = componentWidget.descriptor.category;
+		var widgetDescriptor = widget.descriptor;
+		var category = widgetDescriptor.category;
 		if(firstCategory || category != currentCategory)
 		{
 			if(!firstCategory)
@@ -107,48 +114,110 @@ function initComponentPicker()
 		firstCategory = false;
 		currentCategory = category;
 
-		// Create widget
+		// Create item html
 		var componentName = componentDescriptor.name;
-		var componentDisplayName = componentWidget.descriptor.displayName;
-		var componentDescription = componentWidget.descriptor.description;
-		var componentRootDir = `${circuitRoot}/components/${componentName}`;
-		var componentImageDir = `${componentRootDir}/img`;
-		var componentIcon = `${componentImageDir}/${componentWidget.descriptor.imageIcon}`;
-		var widgetHtml = "";
-		widgetHtml += `<div class='editor_component_widget'>`;
-		widgetHtml += `  <div class='icon' style="background-image: url('${componentIcon}')"/>`;
-		widgetHtml += `  <div class='content'>`;
-		widgetHtml += `    <h2>${componentDisplayName}</h2>`;
-		widgetHtml += `    <div class="description">${componentDescription}</div>`;
-		widgetHtml += `  </div>`;
-		widgetHtml += `</div>`;
-		componentPicker.append(widgetHtml);
+		var componentDisplayName = widgetDescriptor.displayName, componentDescription = widgetDescriptor.description;
+		var componentIcon = `${circuitRoot}/components/${componentName}/img/${widgetDescriptor.imageIcon}`;
+		var componmentPickerItemHtml = "";
+		componmentPickerItemHtml += `<div class='editor_component_picker_item'>`;
+		componmentPickerItemHtml += `  <div class='icon' style="background-image: url('${componentIcon}')"/>`;
+		componmentPickerItemHtml += `  <div class='content'>`;
+		componmentPickerItemHtml += `    <h2>${componentDisplayName}</h2>`;
+		componmentPickerItemHtml += `    <div class="description">${componentDescription}</div>`;
+		componmentPickerItemHtml += `  </div>`;
+		componmentPickerItemHtml += `</div>`;
+		var componentPickerItem = $(componmentPickerItemHtml);
 
-		// Bind events
-		$(".editor_component_widget").mousedown(() => onStartDraggingWidget());
+		// Store component descriptor and icon shortcut in item data
+		componentPickerItem.data({ componentDescriptor: componentDescriptor, icon: componentIcon });
+
+		// Register item mouse event
+		componentPickerItem.on("mousedown", { item: componentPickerItem }, (e) => onStartDraggingComponentPickerItem(e.data.item, e.pageX, e.pageY));
+
+		// Add item to picker
+		componentPicker.append(componentPickerItem);
 	}
+
+	// Setup icon to show when dragging component picker items
+	draggingComponentPickerItemIcon = $("<div id='editor_component_picker_item_drag_icon'></div>");
+	$("body").append(draggingComponentPickerItemIcon);
 	return;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onStartDraggingWidget()
+function onMouseMove(e)
 {
-	console.log("Started dragging");
+	if(draggingComponentPickerItem != null)
+	{
+		updateDraggingComponentPickerItemIconPosition(e.pageX, e.pageY);
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
+{
+	var componentName = componentPickerItem.data().componentDescriptor.name;
+	console.log(`Started dragging component picker item: ${componentName}`);
+	draggingComponentPickerItem = componentPickerItem;
+
+	// Show and move icon
+	draggingComponentPickerItemIcon.css('background-image', `url('${componentPickerItem.data().icon}')`);
+	draggingComponentPickerItemIcon.show();
+	updateDraggingComponentPickerItemIconPosition(x, y);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCancelDraggingComponentPickerItem()
+{
+	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
+	console.log(`Cancel dragging component picker item: ${componentName}`);
+	draggingComponentPickerItem = null;
+
+	// Hide icon
+	draggingComponentPickerItemIcon.hide();
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onFinishDraggingComponentPickerItem()
+{
+	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
+	console.log(`Finish dragging component picker item: ${componentName}`);
+	draggingComponentPickerItem = null;
+
+	// Hide icon
+	draggingComponentPickerItemIcon.hide();
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function updateDraggingComponentPickerItemIconPosition(x, y)
+{
+	draggingComponentPickerItemIcon.css("left", x  - 26);
+	draggingComponentPickerItemIcon.css("top", y - 26);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
 function onComponentPickerMouseUp()
 {
-	console.log("Cancel dragging");
+	if(draggingComponentPickerItem != null)
+	{
+		onCancelDraggingComponentPickerItem();
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
 function onCanvasMouseUp()
 {
-	console.log("Stopped dragging");
+	if(draggingComponentPickerItem != null)
+	{
+		onFinishDraggingComponentPickerItem();
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
