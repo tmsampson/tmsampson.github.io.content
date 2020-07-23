@@ -10,7 +10,6 @@ circuit_render.registerComponentWidget({
 	description: "Nand gate",
 	category: "Basic",
 	imageIcon: "nand_icon.png",
-	imageDisplay: "nand_display.png",
 	version: "1.0.0.0",
 	create: () => new NandRenderer()
 });

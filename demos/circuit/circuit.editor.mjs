@@ -16,6 +16,10 @@ const jqueryCss = "third-party/jquery/jquery-ui.min.css";	// jQuery UI (css)
 const editorCss = "circuit.editor.css";						// Editor css
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Config
+var circuitRoot = "./";
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Components
 var componentPicker = null, toolbar = null;
 
@@ -52,6 +56,9 @@ async function init()
 	// Create workspace for editor
 	var canvasContainer = $("#editor_canvas_container");
 	workspace = circuit.createWorkspace("editor", canvasContainer);
+
+	// Bind canvas events
+	$("#editor_canvas_container canvas").mouseup(() => onCanvasMouseUp());
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -62,6 +69,9 @@ function initComponentPicker()
 	var componentPickerWidth = 300, componentPickerPadding = 30;
 	componentPicker = $("#editor_component_picker");
 	componentPicker.dialog({ width: componentPickerWidth, closeOnEscape: false });
+
+	// Bind events
+	componentPicker.mouseup(() => onComponentPickerMouseUp());
 
 	// Set component picker initial position
 	$("div[aria-describedby='editor_component_picker']").offset({ top: componentPickerPadding, left: componentPickerPadding });
@@ -97,12 +107,48 @@ function initComponentPicker()
 		firstCategory = false;
 		currentCategory = category;
 
-		// Create entry
+		// Create widget
+		var componentName = componentDescriptor.name;
 		var componentDisplayName = componentWidget.descriptor.displayName;
 		var componentDescription = componentWidget.descriptor.description;
-		componentPicker.append(`- ${componentDisplayName}<br>`);
+		var componentRootDir = `${circuitRoot}/components/${componentName}`;
+		var componentImageDir = `${componentRootDir}/img`;
+		var componentIcon = `${componentImageDir}/${componentWidget.descriptor.imageIcon}`;
+		var widgetHtml = "";
+		widgetHtml += `<div class='editor_component_widget'>`;
+		widgetHtml += `  <div class='icon' style="background-image: url('${componentIcon}')"/>`;
+		widgetHtml += `  <div class='content'>`;
+		widgetHtml += `    <h2>${componentDisplayName}</h2>`;
+		widgetHtml += `    <div class="description">${componentDescription}</div>`;
+		widgetHtml += `  </div>`;
+		widgetHtml += `</div>`;
+		componentPicker.append(widgetHtml);
+
+		// Bind events
+		$(".editor_component_widget").mousedown(() => onStartDraggingWidget());
 	}
 	return;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onStartDraggingWidget()
+{
+	console.log("Started dragging");
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onComponentPickerMouseUp()
+{
+	console.log("Cancel dragging");
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCanvasMouseUp()
+{
+	console.log("Stopped dragging");
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

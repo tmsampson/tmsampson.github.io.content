@@ -10,7 +10,6 @@ circuit_render.registerComponentWidget({
 	description: "'Always On' Power source",
 	category: "Basic",
 	imageIcon: "power_source_icon.png",
-	imageDisplay: "power_source_display.png",
 	version: "1.0.0.0",
 	create: () => new PowerSourceRenderer()
 });
