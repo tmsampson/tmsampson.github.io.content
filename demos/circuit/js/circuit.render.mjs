@@ -52,8 +52,8 @@ async function init()
 		return false;
 	}
 
-	// Initialise registered widgets
-	initWidgets();
+	// Initialise registered component widgets
+	initComponentWidgets();
 	return true;
 }
 
@@ -123,7 +123,7 @@ function registerComponentWidget(widgetDescriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function initWidgets()
+function initComponentWidgets()
 {
 	// For each registered widget....
 	for (var widgetName in widgetRegistry)

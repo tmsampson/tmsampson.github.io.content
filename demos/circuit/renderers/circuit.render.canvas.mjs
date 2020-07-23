@@ -5,11 +5,11 @@ import * as circuit_render from "../js/circuit.render.mjs";
 import * as circuit_utils from "../js/circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Config
+// External dependencies
 const paperLib = "third-party/paperjs/paper-full.js"
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Register
+// Self registration
 circuit_render.registerRenderer({
 	name: "circuit_canvas_renderer",
 	description: "Circuit canvas renderer",

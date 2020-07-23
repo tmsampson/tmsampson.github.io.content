@@ -16,12 +16,12 @@ const jqueryCss = "third-party/jquery/jquery-ui.min.css";	// jQuery UI (css)
 const editorCss = "circuit.editor.css";						// Editor css
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Data
-var workspace = null;
+// Components
+var componentPicker = null, toolbar = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Components
-var canvas = null, componentPicker = null, toolbar = null;
+// Data
+var workspace = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
@@ -43,23 +43,15 @@ async function init()
 	// Init ciruit
 	await circuit.init();
 
-	// Grab canvas
-	canvas = $("#circuit_canvas");
-
 	// Setup component picker
 	initComponentPicker();
 
 	// Setup toolbar
-	toolbar = $("#editor_toolbar");
-	var toolbarWidth = 600;
-	var toolbarPadding = 30;
-	var windowWidth = $(window).width();
-	toolbar.dialog({ width: toolbarWidth, height:50, closeOnEscape: false });
-	$("div[aria-describedby='editor_toolbar']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
+	initToolbar();
 
-	// Create single workspace for editor
-	var workspaceCanvas = $("#editor_canvas");
-	workspace = circuit.createWorkspace("editor", workspaceCanvas);
+	// Create workspace for editor
+	var canvasContainer = $("#editor_canvas_container");
+	workspace = circuit.createWorkspace("editor", canvasContainer);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -79,7 +71,7 @@ function initComponentPicker()
 	var componentDescriptors = Object.values(componentRegistry);
 	componentDescriptors.sort((a, b) => (a.category > b.category) ? 1 : ((b.category > a.category) ? -1 : 0));
 
-	// Populate components picker
+	// Populate components picker with component widgets
 	var currentCategory = "", firstCategory = true;
 	for (var i = 0; i < componentDescriptors.length; ++i)
 	{
@@ -111,6 +103,17 @@ function initComponentPicker()
 		componentPicker.append(`- ${componentDisplayName}<br>`);
 	}
 	return;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Toolbar
+function initToolbar()
+{
+	toolbar = $("#editor_toolbar");
+	var toolbarWidth = 600, toolbarPadding = 30;
+	var windowWidth = $(window).width();
+	toolbar.dialog({ width: toolbarWidth, height:50, closeOnEscape: false });
+	$("div[aria-describedby='editor_toolbar']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

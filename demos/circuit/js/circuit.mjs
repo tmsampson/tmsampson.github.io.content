@@ -18,9 +18,10 @@ var renderer = null;
 // Init
 async function init()
 {
-	// Initialise and load render later (optional)
+	// Initialise and load render layer
 	if(await circuit_render.init())
 	{
+		// Grab available renderer (optional)
 		renderer = circuit_render.getRenderer();
 	}
 }
