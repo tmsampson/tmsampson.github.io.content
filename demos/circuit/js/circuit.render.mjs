@@ -4,19 +4,28 @@ import * as circuit from "./circuit.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Registration
-var rendererDescriptor = null;
-var renderer = null;
+var rendererRegistry = { };
 var widgetRegistry = { }
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Data
+var renderers = [];
 
-function registerRenderer(descriptor)
+// -------------------------------------------------------------------------------------------------------------------------
+
+function registerRenderer(rendererDescriptor)
 {
-	// Store renderer descriptor
-	// NOTE: Renderers can register quite early in the startup process, so we store off the descriptor
-	//       and defer instance creation until the proper initialisation stage
-	console.log(`Registering renderer: ${descriptor.name}`);
-	rendererDescriptor = descriptor;
+	// Check to ensure this renderer is not already registered
+	var rendererName = rendererDescriptor.name;
+	console.log(`Registering renderer: ${rendererName}`);
+	if(rendererRegistry.hasOwnProperty(rendererName))
+	{
+		console.error(`Renderer '${rendererName}' already registered`);
+		return;
+	}
+
+	// Add to registry
+	rendererRegistry[rendererName] = rendererDescriptor;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -25,31 +34,17 @@ async function init()
 {
 	console.log("Initialising render layer");
 	
-	// Create renderer (optional)
-	if(rendererDescriptor)
+	// Initialise renderers
+	if(!await initRenderers())
 	{
-		var rendererName = rendererDescriptor.name;
-		console.log(`Initialising renderer: ${rendererName}`);
-		var result = createRenderer(rendererDescriptor);
-		if(result.value)
-		{
-			renderer = result.value;
-			if(!await renderer.load())
-			{
-				console.error(`Renderer ${rendererDescriptor.name} failed to load`);
-				return false;
-			}
-		}
-		else
-		{
-			console.error(result.message);
-			return false;
-		}
+		return false;
 	}
-	else
+
+	// Warn if running without a renderer
+	// NOTE: This is completely fine, circuit is designed to allow "headless" execution
+	if(renderers.length == 0)
 	{
-		// Continue in "headless" mode
-		console.log("No registered renderers")
+		console.log("No registered renderers");
 		return true;
 	}
 
@@ -60,17 +55,36 @@ async function init()
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function validateRenderer(renderer)
+async function initRenderers()
 {
-	if(!(typeof renderer.load === 'function'))
+	// For each registered renderer....
+	for (var rendererName in rendererRegistry)
 	{
-		return { value: false, message: "Renderer has no init function" };
+		// Create renderer
+		console.log(`Initialising renderer: ${rendererName}`);
+		var rendererDescriptor = rendererRegistry[rendererName];
+		var result = createRenderer(rendererDescriptor);
+
+		// Handle failures
+		var renderer = result.value;
+		if(renderer == null)
+		{
+			console.error(result.message);
+			return false;
+		}
+
+		// Load renderer
+		if(!await renderer.load())
+		{
+			console.error(`Renderer ${rendererName} failed to load`);
+			return false;
+		}
+
+		// Store renderer
+		renderers.push(renderer);
 	}
-	if(!(typeof renderer.onCreateWorkspace === 'function'))
-	{
-		return { value: false, message: "Renderer has no onCreateWorkspace function" };
-	}
-	return { value: true, message: "" };
+
+	return true;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -96,6 +110,21 @@ function createRenderer(descriptor)
 
 	// Component successfully created
 	return { value: renderer, message: "" };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateRenderer(renderer)
+{
+	if(!(typeof renderer.load === 'function'))
+	{
+		return { value: false, message: "Renderer has no init function" };
+	}
+	if(!(typeof renderer.onCreateWorkspace === 'function'))
+	{
+		return { value: false, message: "Renderer has no onCreateWorkspace function" };
+	}
+	return { value: true, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -143,8 +172,12 @@ function initComponentWidgets()
 // Workspaces
 function onCreateWorkspace(workspace, renderContainer)
 {
-	// Forward to active renderer
-	renderer.onCreateWorkspace(workspace, renderContainer);
+	// Forward to all renderers
+	for(var i = 0; i < renderers.length; ++i)
+	{
+		var renderer = renderers[i];
+		renderer.onCreateWorkspace(workspace, renderContainer);
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

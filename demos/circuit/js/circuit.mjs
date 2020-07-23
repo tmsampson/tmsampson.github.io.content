@@ -56,37 +56,6 @@ function registerComponent(componentDescriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function validateComponent(component)
-{
-	if(!component.hasOwnProperty("descriptor"))
-	{
-		return { value: false, message: "Component has no descriptor" };
-	}
-	if(!component.descriptor.hasOwnProperty("name"))
-	{
-		return { value: false, message: "Component has no name" };
-	}
-	if(!component.descriptor.hasOwnProperty("category"))
-	{
-		return { value: false, message: "Component has no category" };
-	}
-	if(!component.hasOwnProperty("inputs"))
-	{
-		return { value: false, message: "Component has no inputs (please provide empty array if no inputs are required)" };
-	}
-	if(!component.hasOwnProperty("outputs"))
-	{
-		return { value: false, message: "Component has no outputs (please provide empty array if no outputs are required)" };
-	}
-	if(!(typeof component.update === 'function'))
-	{
-		return { value: false, message: "Component has no update function" };
-	}
-	return { value: true, message: "" };
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
 function createComponent(descriptor)
 {
 	// Check to ensure this component is registered
@@ -115,6 +84,37 @@ function createComponent(descriptor)
 
 	// Component successfully created
 	return { value: component, message: "" };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateComponent(component)
+{
+	if(!component.hasOwnProperty("descriptor"))
+	{
+		return { value: false, message: "Component has no descriptor" };
+	}
+	if(!component.descriptor.hasOwnProperty("name"))
+	{
+		return { value: false, message: "Component has no name" };
+	}
+	if(!component.descriptor.hasOwnProperty("category"))
+	{
+		return { value: false, message: "Component has no category" };
+	}
+	if(!component.hasOwnProperty("inputs"))
+	{
+		return { value: false, message: "Component has no inputs (please provide empty array if no inputs are required)" };
+	}
+	if(!component.hasOwnProperty("outputs"))
+	{
+		return { value: false, message: "Component has no outputs (please provide empty array if no outputs are required)" };
+	}
+	if(!(typeof component.update === 'function'))
+	{
+		return { value: false, message: "Component has no update function" };
+	}
+	return { value: true, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
