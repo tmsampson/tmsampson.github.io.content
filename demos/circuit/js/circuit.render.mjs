@@ -48,8 +48,9 @@ async function init()
 	}
 	else
 	{
+		// Continue in "headless" mode
 		console.log("No registered renderers")
-		return false;
+		return true;
 	}
 
 	// Initialise registered component widgets
@@ -65,9 +66,9 @@ function validateRenderer(renderer)
 	{
 		return { value: false, message: "Renderer has no init function" };
 	}
-	if(!(typeof renderer.createWorkspace === 'function'))
+	if(!(typeof renderer.onCreateWorkspace === 'function'))
 	{
-		return { value: false, message: "Renderer has no createWorkspace function" };
+		return { value: false, message: "Renderer has no onCreateWorkspace function" };
 	}
 	return { value: true, message: "" };
 }
@@ -95,13 +96,6 @@ function createRenderer(descriptor)
 
 	// Component successfully created
 	return { value: renderer, message: "" };
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-function getRenderer()
-{
-	return renderer;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -146,5 +140,13 @@ function initComponentWidgets()
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Workspaces
+function onCreateWorkspace(workspace, renderContainer)
+{
+	// Forward to active renderer
+	renderer.onCreateWorkspace(workspace, renderContainer);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { registerRenderer, registerComponentWidget, init, getRenderer }
+export { registerRenderer, registerComponentWidget, init, onCreateWorkspace }

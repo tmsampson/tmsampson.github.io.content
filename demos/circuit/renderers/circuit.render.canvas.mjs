@@ -27,7 +27,7 @@ class CircuitCanvasRenderer
 		return await circuit_utils.loadScript(paperLib);
 	}
 
-	createWorkspace(workspace, renderContainer)
+	onCreateWorkspace(workspace, renderContainer)
 	{
 		// Create canvas
 		renderContainer.append("<canvas id='circuit_canvas' resize></canvas>");

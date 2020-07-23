@@ -11,18 +11,14 @@ export const version = "1.0.0.0";
 var componentRegistry = { };
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Rendering (optional)
-var renderer = null;
-
-// -------------------------------------------------------------------------------------------------------------------------
 // Init
 async function init()
 {
 	// Initialise and load render layer
-	if(await circuit_render.init())
+	if(!await circuit_render.init())
 	{
-		// Grab available renderer (optional)
-		renderer = circuit_render.getRenderer();
+		console.error("Failed to initialise render layer")
+		return false;
 	}
 }
 
@@ -32,10 +28,10 @@ function createWorkspace(name, renderContainer)
 {
 	var workspace = null;
 
-	// Bind renderer (optional)
-	if(renderer != null && renderContainer != null)
+	// Inform render layer
+	if(renderContainer != null)
 	{
-		renderer.createWorkspace(workspace, renderContainer);
+		circuit_render.onCreateWorkspace(workspace, renderContainer);
 	}
 
 	return workspace;
