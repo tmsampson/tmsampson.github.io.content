@@ -6,7 +6,6 @@ import * as circuit from "../../js/circuit.mjs";
 // Register
 circuit.registerComponent({
 	name: "nand",
-	description: "Nand gate",
 	version: "1.0.0.0",
 	create: () => new Nand()
 });
