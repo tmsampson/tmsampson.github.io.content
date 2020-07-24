@@ -63,7 +63,7 @@ async function init()
 	workspace = circuit.createWorkspace("editor", canvasContainer);
 
 	// Bind mouse events
-	$("#editor_canvas_container canvas").mouseup(() => onCanvasMouseUp());
+	$("#editor_canvas_container canvas").mouseup((e) => onCanvasMouseUp(e));
 	$(document).on('mousemove', (e) => onMouseMove(e));
 }
 
@@ -182,14 +182,18 @@ function onCancelDraggingComponentPickerItem()
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onFinishDraggingComponentPickerItem()
+function onFinishDraggingComponentPickerItem(x, y)
 {
-	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
+	var componentDescriptor = draggingComponentPickerItem.data().componentDescriptor;
+	var componentName = componentDescriptor.name;
 	console.log(`Finish dragging component picker item: ${componentName}`);
 	draggingComponentPickerItem = null;
 
 	// Hide icon
 	draggingComponentPickerItemIcon.hide("puff", { percent:150 }, 300);
+
+	// Add component to workspace
+	workspace.addComponent(componentDescriptor, { position: [x, y] });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -212,11 +216,11 @@ function onComponentPickerMouseUp()
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onCanvasMouseUp()
+function onCanvasMouseUp(e)
 {
 	if(draggingComponentPickerItem != null)
 	{
-		onFinishDraggingComponentPickerItem();
+		onFinishDraggingComponentPickerItem(e.pageX, e.pageY);
 	}
 }
 

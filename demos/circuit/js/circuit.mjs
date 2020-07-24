@@ -1,6 +1,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Imports
 import * as circuit_render from "./circuit.render.mjs"
+import * as circuit_workspace from "./circuit.workspace.mjs"
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Constants
@@ -26,9 +27,10 @@ async function init()
 // Workspace
 function createWorkspace(name, renderContainer)
 {
-	var workspace = null;
+	// Create workspace
+	var workspace = circuit_workspace.create(name);
 
-	// Inform render layer
+	// Inform render layer (only if caller provided a render container)
 	if(renderContainer != null)
 	{
 		circuit_render.onCreateWorkspace(workspace, renderContainer);
