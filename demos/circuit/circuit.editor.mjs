@@ -189,7 +189,7 @@ function onFinishDraggingComponentPickerItem()
 	draggingComponentPickerItem = null;
 
 	// Hide icon
-	draggingComponentPickerItemIcon.hide();
+	draggingComponentPickerItemIcon.hide("puff", { percent:150 }, 300);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
