@@ -193,7 +193,7 @@ function onFinishDraggingComponentPickerItem(x, y)
 	draggingComponentPickerItemIcon.hide("puff", { percent:150 }, 300);
 
 	// Add component to workspace
-	workspace.addComponent(componentDescriptor, { position: [x, y] });
+	workspace.addComponent(componentDescriptor, { position: { x: x, y: y } });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

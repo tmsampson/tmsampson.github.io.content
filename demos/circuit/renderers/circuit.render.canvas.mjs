@@ -5,10 +5,6 @@ import * as circuit_render from "../js/circuit.render.mjs";
 import * as circuit_utils from "../js/circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
-// External dependencies
-const paperLib = "third-party/paperjs/paper-full.js"
-
-// -------------------------------------------------------------------------------------------------------------------------
 // Self registration
 circuit_render.registerRenderer({
 	name: "circuit_canvas_renderer",
@@ -21,35 +17,104 @@ circuit_render.registerRenderer({
 // Implementation
 class CircuitCanvasRenderer
 {
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	async load()
 	{
-		// Load PaperJS dynamically (cannot currently be imported as ES module)
-		return await circuit_utils.loadScript(paperLib);
+		// Setup workspace renderer container
+		this.workspaceRenderers = [];
+
+		// Start rendering
+		this.startRendering();
+		return true;
 	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	startRendering(e)
+	{
+		var workspaces = this.workspaceRenderers;
+		function onRender()
+		{
+			// Render workspaces
+			for(var i = 0; i < workspaces.length; ++i)
+			{
+				workspaces[i].onRender(e);
+			}
+
+			// Request next render callback
+			window.requestAnimationFrame(onRender);
+
+		};
+
+		// Request first render callback
+		window.requestAnimationFrame(onRender);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
 
 	onCreateWorkspace(workspace, renderContainer)
 	{
-		// Create canvas
-		renderContainer.append("<canvas id='circuit_canvas' resize></canvas>");
-
-		// Get a reference to the canvas object
-		var canvas = document.getElementById("circuit_canvas");
-
-		// Create an empty project and a view for the canvas:
-		paper.setup(canvas);
-		// Create a Paper.js Path to draw a line into it:
-		var path = new paper.Path();
-		// Give the stroke a color
-		path.strokeColor = 'black';
-		var start = new paper.Point(400, 400);
-		// Move to start and draw a line from there
-		path.moveTo(start);
-		// Note that the plus operator on Point objects does not work
-		// in JavaScript. Instead, we need to call the add() function:
-		path.lineTo(start.add([ 200, -50 ]));
-		// Draw the view now:
-		paper.view.draw();
+		var workspaceRenderer = new CircuitCanvasWorkspaceRenderer(workspace, renderContainer);
+		this.workspaceRenderers.push(workspaceRenderer);
 	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+class CircuitCanvasWorkspaceRenderer
+{
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	constructor(workspace, renderContainer)
+	{
+		// Store workspace
+		this.workspace = workspace;
+
+		// Create canvas and add to page
+		var canvas = $("<canvas id='circuit_canvas' resize></canvas>");
+
+		// Store canvas and context
+		this.canvas = canvas[0];
+		this.ctx = this.canvas.getContext('2d');
+
+		// Resize canvas
+		this.canvas.width  = window.innerWidth;
+		this.canvas.height = window.innerHeight;
+
+		// Add canvas to page
+		renderContainer.append(this.canvas);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	onRender(e)
+	{
+		// Clear canvas
+		var ctx = this.ctx;
+		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+		// Render components
+		var components = this.workspace.components;
+		for(var i = 0; i < components.length; ++i)
+		{
+			// Skip components without a position
+			var component = components[i];
+			var componentPosition = component.args.position;
+			if(!componentPosition)
+			{
+				continue;
+			}
+
+			// Draw rectangle
+			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
+			ctx.fillRect(componentPosition.x-10, componentPosition.y-10, 20, 20);
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

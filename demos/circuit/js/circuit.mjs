@@ -58,7 +58,7 @@ function registerComponent(componentDescriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function createComponent(descriptor)
+function createComponent(descriptor, args)
 {
 	// Check to ensure this component is registered
 	var componentName = descriptor.name;
@@ -74,9 +74,10 @@ function createComponent(descriptor)
 		return { value: null, message: `Component ${componentName} has not been registered` };
 	}
 
-	// Store descriptor onto component
+	// Store descriptor and args onto component
 	component.descriptor = descriptor;
-
+	component.args = args;
+	
 	// Validate component instance
 	var validationResult = validateComponent(component);
 	if(!validationResult.value)
@@ -90,6 +91,19 @@ function createComponent(descriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
+function createComponentByName(componentName, args)
+{
+	var componentDescriptor = getComponentDescriptor(componentName);
+	if(componentDescriptor == null)
+	{
+		return null;
+	}
+
+	return createComponent(componentDescriptor, args)
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
 function validateComponent(component)
 {
 	if(!component.hasOwnProperty("descriptor"))
@@ -99,10 +113,6 @@ function validateComponent(component)
 	if(!component.descriptor.hasOwnProperty("name"))
 	{
 		return { value: false, message: "Component has no name" };
-	}
-	if(!component.descriptor.hasOwnProperty("category"))
-	{
-		return { value: false, message: "Component has no category" };
 	}
 	if(!component.hasOwnProperty("inputs"))
 	{
@@ -143,6 +153,6 @@ function getComponentRegistry()
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { init, registerComponent, createWorkspace, createComponent, getComponentRegistry, getComponentDescriptor }
+export { init, registerComponent, createWorkspace, createComponent, createComponentByName, getComponentRegistry, getComponentDescriptor }
 
 // -------------------------------------------------------------------------------------------------------------------------

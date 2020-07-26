@@ -25,18 +25,40 @@ class CircuitWorkspace
 
 	addComponent(componentDescriptor, args)
 	{
+		// Create component instance
+		var result = circuit.createComponent(componentDescriptor, args);
+		var componentInstance = result.value;
+		if(componentInstance == null)
+		{
+			console.error(result.message);
+			return null;
+		}
+
+		// Add component to workspace
 		console.log(`Workspace '${this.name}': Adding component '${componentDescriptor.name}'`);
-		var componentInstance = componentDescriptor.create();
 		this.components.push(componentInstance);
+
+		// Component successfully added
 		return componentInstance;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	addComponentByName(name, args)
+	addComponentByName(componentName, args)
 	{
-		// Go lookup in circuit registry then call addComponent
-		// REMEMBER: Steal logic from circuit createComponent and then remove it
+		// Create component instance
+		var componentInstance = circuit.createComponentByName(componentName, args);
+		if(componentInstance == null)
+		{
+			return null;
+		}
+
+		// Add component to workspace
+		console.log(`Workspace '${this.name}': Adding component '${componentName}'`);
+		this.components.push(componentInstance);
+
+		// Component successfully added
+		return componentInstance;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
