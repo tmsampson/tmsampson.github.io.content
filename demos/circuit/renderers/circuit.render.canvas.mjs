@@ -5,6 +5,10 @@ import * as circuit_render from "../js/circuit.render.mjs";
 import * as circuit_utils from "../js/circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
+// External dependencies
+const jqueryMouseWheelPlugin = "third-party/jquery/jquery.mousewheel.min.js";
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Self registration
 circuit_render.registerRenderer({
 	name: "circuit_canvas_renderer",
@@ -21,6 +25,13 @@ class CircuitCanvasRenderer
 
 	async load()
 	{
+		// Load jquery mousehweel plugin dynamically (cannot currently be imported as ES module)
+		if(!await circuit_utils.loadScript(jqueryMouseWheelPlugin))
+		{
+			console.error("Failed to load jQuery mouse wheel plugin");
+			return false;
+		}
+
 		// Setup workspace renderer container
 		this.workspaceRenderers = [];
 
@@ -125,6 +136,7 @@ class CircuitCanvasWorkspaceRenderer
 		canvas.on("mousedown", (e) => this.onCanvasMouseDown(e));
 		canvas.on("mouseup", (e) => this.onCanvasMouseUp(e));
 		canvas.on("mousemove", (e) => this.onCanvasMouseMove(e));
+		canvas.on('mousewheel', (e) => this.onCanvasMouseScroll(e));
 
 		// Store canvas and context
 		this.canvas = canvas[0];
@@ -174,7 +186,6 @@ class CircuitCanvasWorkspaceRenderer
 		{
 			case 1:
 			{
-				this.modifyZoom(0.2);
 				break;
 			}
 			case 2:
@@ -184,7 +195,6 @@ class CircuitCanvasWorkspaceRenderer
 			}
 			case 3:
 			{
-				this.modifyZoom(-0.2);
 				break;
 			}
 		}
@@ -212,6 +222,14 @@ class CircuitCanvasWorkspaceRenderer
 		{
 			this.updatePanning(e.pageX, e.pageY);
 		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	onCanvasMouseScroll(e)
+	{
+		var scrollY = (e.deltaY * e.deltaFactor) / 300;
+		this.modifyZoom(scrollY);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -249,7 +267,7 @@ class CircuitCanvasWorkspaceRenderer
 
 	modifyZoom(zoomAmount)
 	{
-		this.view.scale += zoomAmount;
+		this.view.scale *= (1 + zoomAmount);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
