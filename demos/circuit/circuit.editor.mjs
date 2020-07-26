@@ -63,8 +63,8 @@ async function init()
 	workspace = circuit.createWorkspace("editor", canvasContainer);
 
 	// Bind mouse events
-	$(window).mouseup((e) => onWindowMouseUp(e));
-	$("#editor_canvas_container canvas").mouseup((e) => onCanvasMouseUp(e));
+	$(window).on("mouseup", (e) => onWindowMouseUp(e));
+	$("#editor_canvas_container canvas").on("mouseup", (e) => onCanvasMouseUp(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
 }
 
