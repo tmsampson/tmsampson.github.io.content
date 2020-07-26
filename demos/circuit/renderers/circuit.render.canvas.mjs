@@ -174,7 +174,7 @@ class CircuitCanvasWorkspaceRenderer
 		{
 			case 1:
 			{
-				this.view.scale += 0.2;
+				this.modifyZoom(0.2);
 				break;
 			}
 			case 2:
@@ -184,7 +184,7 @@ class CircuitCanvasWorkspaceRenderer
 			}
 			case 3:
 			{
-				this.view.scale -= 0.2;
+				this.modifyZoom(-0.2);
 				break;
 			}
 		}
@@ -244,7 +244,14 @@ class CircuitCanvasWorkspaceRenderer
 		this.isPanning = false;
 		this.canvas.style.cursor = "pointer";
 	}
-	
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	modifyZoom(zoomAmount)
+	{
+		this.view.scale += zoomAmount;
+	}
+
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	viewPositionToWorkspacePosition(viewPosition)
