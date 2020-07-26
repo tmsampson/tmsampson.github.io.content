@@ -182,7 +182,7 @@ async function initComponentWidgets()
 
 		// Load widget image
 		var componentName = widgetName;
-		var widgetImageUrl = `${circuitRoot}/components/${componentName}/img/${widgetDescriptor.image.file}`;
+		var widgetImageUrl = `${circuitRoot}components/${componentName}/img/${widgetDescriptor.image.file}`;
 		widgetInstance.image = await circuit_util.loadImage(widgetImageUrl);
 
 		// Store descriptor onto widget
