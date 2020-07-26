@@ -124,9 +124,13 @@ function validateRenderer(renderer)
 	{
 		return { value: false, message: "Renderer has no onCreateWorkspace function" };
 	}
-	if(!(typeof renderer.convertViewPosition === 'function'))
+	if(!(typeof renderer.viewPositionToWorkspacePosition === 'function'))
 	{
-		return { value: false, message: "Renderer has no convertViewPosition function" };
+		return { value: false, message: "Renderer has no viewPositionToWorkspacePosition function" };
+	}
+	if(!(typeof renderer.workspacePositionToViewPosition === 'function'))
+	{
+		return { value: false, message: "Renderer has no workspacePositionToViewPosition function" };
 	}
 	return { value: true, message: "" };
 }

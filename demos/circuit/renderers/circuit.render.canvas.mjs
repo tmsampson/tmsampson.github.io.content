@@ -62,7 +62,7 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	convertViewPosition(workspace, viewPosition)
+	viewPositionToWorkspacePosition(workspace, viewPosition)
 	{
 		// For each workspace renderer...
 		for(var i = 0; i < this.workspaceRenderers.length; ++i)
@@ -71,7 +71,27 @@ class CircuitCanvasRenderer
 			if(workspaceRenderer.workspace == workspace)
 			{
 				// Ask workspace renderer to map view position
-				return workspaceRenderer.convertViewPosition(viewPosition);
+				return workspaceRenderer.viewPositionToWorkspacePosition(viewPosition);
+			}
+		}
+
+		// Could not find renderer for this workspace, return unmodified view position
+		return viewPosition;
+	}
+
+	
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	workspacePositionToViewPosition(workspace, viewPosition)
+	{
+		// For each workspace renderer...
+		for(var i = 0; i < this.workspaceRenderers.length; ++i)
+		{
+			var workspaceRenderer = this.workspaceRenderers[i];
+			if(workspaceRenderer.workspace == workspace)
+			{
+				// Ask workspace renderer to map workspace position
+				return workspaceRenderer.workspacePositionToViewPosition(viewPosition);
 			}
 		}
 
@@ -139,17 +159,10 @@ class CircuitCanvasWorkspaceRenderer
 			}
 
 			// Draw rectangle
-			var scale = this.view.scale;
-			var viewCentrePos = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 			var workspacePos = { x: componentPosition.x - 10, y: componentPosition.y - 10 };
-			var viewPos = { x: workspacePos.x - viewCentrePos.x, y: workspacePos.y - viewCentrePos.y }
-			var viewPosPanned = { x: viewPos.x + this.view.focus.x, y: viewPos.y + this.view.focus.y };
-			var viewPosScaled = { x: viewPosPanned.x * scale, y: viewPosPanned.y * scale };
-			
-			var x = viewPosScaled.x + viewCentrePos.x;
-			var y = viewPosScaled.y + viewCentrePos.y;
+			var viewPos = this.workspacePositionToViewPosition(workspacePos);
 			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
-			ctx.fillRect(x, y, 20 * this.view.scale, 20 * this.view.scale);
+			ctx.fillRect(viewPos.x, viewPos.y, 20 * this.view.scale, 20 * this.view.scale);
 		}
 	}
 
@@ -234,9 +247,32 @@ class CircuitCanvasWorkspaceRenderer
 	
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	convertViewPosition(viewPosition)
+	viewPositionToWorkspacePosition(viewPosition)
 	{
-		return { x: viewPosition.x - this.view.focus.x, y: viewPosition.y - this.view.focus.y };
+		var focus = this.view.focus, scale = this.view.scale;
+		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+		var pos = viewPosition;
+		pos.x -= canvasCentre.x;
+		pos.y -= canvasCentre.y;
+		pos.x /= scale;
+		pos.y /= scale;
+		pos.x -= focus.x;
+		pos.y -= focus.y;
+		pos.x += canvasCentre.x;
+		pos.y += canvasCentre.y;
+		return { x: pos.x, y: pos.y };
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	workspacePositionToViewPosition(workspacePosition)
+	{
+		var focus = this.view.focus, scale = this.view.scale;
+		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+		var viewPosition = { x: workspacePosition.x - canvasCentre.x, y: workspacePosition.y - canvasCentre.y }
+		viewPosition.x += focus.x; viewPosition.y += focus.y; // Apply pan
+		viewPosition.x *= scale; viewPosition.y *= scale;     // Apply zoom
+		return { x: viewPosition.x + canvasCentre.x, y: viewPosition.y + canvasCentre.y };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

@@ -195,7 +195,7 @@ function onFinishDraggingComponentPickerItem(x, y)
 
 	// Perform view --> workspace position mapping
 	var viewPosition = { x: x, y: y };
-	var workspacePosition = workspace.convertViewPosition(viewPosition);
+	var workspacePosition = workspace.viewPositionToWorkspacePosition(viewPosition);
 
 	// Add component to workspace
 	workspace.addComponent(componentDescriptor, { position: workspacePosition });
