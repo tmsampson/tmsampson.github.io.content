@@ -78,7 +78,7 @@ function initComponentPicker()
 	componentPicker.dialog({ width: componentPickerWidth, closeOnEscape: false });
 
 	// Bind events
-	componentPicker.mouseup(() => onComponentPickerMouseUp());
+	componentPicker.mouseup((e) => { e.preventDefault(); });
 
 	// Set component picker initial position
 	$("div[aria-describedby='editor_component_picker']").offset({ top: componentPickerPadding, left: componentPickerPadding });
@@ -212,16 +212,6 @@ function updateDraggingComponentPickerItemIconPosition(x, y)
 // -------------------------------------------------------------------------------------------------------------------------
 
 function onWindowMouseUp()
-{
-	if(draggingComponentPickerItem != null)
-	{
-		onCancelDraggingComponentPickerItem();
-	}
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-function onComponentPickerMouseUp()
 {
 	if(draggingComponentPickerItem != null)
 	{

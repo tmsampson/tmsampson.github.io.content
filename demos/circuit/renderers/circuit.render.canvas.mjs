@@ -90,11 +90,21 @@ class CircuitCanvasWorkspaceRenderer
 
 	constructor(workspace, renderContainer)
 	{
+		// Init state
+		this.isPanning = false;
+		this.panOrigin = { }
+		this.view = { focus: { x: 0, y: 0 }, scale : 1.0 };
+
 		// Store workspace
 		this.workspace = workspace;
 
-		// Create canvas and add to page
+		// Create canvas
 		var canvas = $("<canvas id='circuit_canvas' resize></canvas>");
+
+		// Bind canvas events
+		canvas.on("mousedown", (e) => this.onCanvasMouseDown(e));
+		canvas.on("mouseup", (e) => this.onCanvasMouseUp(e));
+		canvas.on("mousemove", (e) => this.onCanvasMouseMove(e));
 
 		// Store canvas and context
 		this.canvas = canvas[0];
@@ -129,16 +139,87 @@ class CircuitCanvasWorkspaceRenderer
 			}
 
 			// Draw rectangle
+			var x = (componentPosition.x - 10) + this.view.focus.x;
+			var y = (componentPosition.y - 10) + this.view.focus.y;
 			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
-			ctx.fillRect(componentPosition.x-10, componentPosition.y-10, 20, 20);
+			ctx.fillRect(x, y, 20, 20);
 		}
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	onCanvasMouseDown(e)
+	{
+		switch(e.which)
+		{
+			case 2:
+			{
+				this.startPanning(e.pageX, e.pageY);
+				break;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	onCanvasMouseUp(e)
+	{
+		switch(e.which)
+		{
+			case 2:
+			{
+				this.stopPanning();
+				break;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	onCanvasMouseMove(e)
+	{
+		if(this.isPanning)
+		{
+			this.updatePanning(e.pageX, e.pageY);
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	startPanning(x, y)
+	{
+		this.isPanning = true;
+		this.panOrigin = { x: x, y: y };
+		this.canvas.style.cursor = "move";
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	updatePanning(x, y)
+	{
+		// Apply pan offset to view
+		var delta = { x: x - this.panOrigin.x, y: y - this.panOrigin.y };
+		this.view.focus.x += delta.x;
+		this.view.focus.y += delta.y;
+
+		// Update pan origin
+		this.panOrigin.x = x;
+		this.panOrigin.y = y;;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	stopPanning(x, y)
+	{
+		this.isPanning = false;
+		this.canvas.style.cursor = "pointer";
+	}
+	
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	convertViewPosition(viewPosition)
 	{
-		return { x: viewPosition.x + 100, y: viewPosition.y };
+		return { x: viewPosition.x - this.view.focus.x, y: viewPosition.y - this.view.focus.y };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
