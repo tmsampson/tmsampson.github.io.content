@@ -9,14 +9,15 @@ circuit_render.registerComponentWidget({
 	displayName: "NAND",
 	description: "Nand gate",
 	category: "Basic",
-	imageIcon: "nand_icon.png",
+	image: { file: "nand.svg", width: 100, height: 50 },
+	imageIcon: { file: "nand_icon.png" },
 	version: "1.0.0.0",
-	create: () => new NandRenderer()
+	create: () => new NandWidget()
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Implementation
-class NandRenderer
+class NandWidget
 {
 	constructor()
 	{

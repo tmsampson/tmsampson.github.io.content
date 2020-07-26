@@ -1,6 +1,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
 import * as circuit from "./circuit.mjs";
+import * as circuit_util from "./circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Registration
@@ -9,6 +10,7 @@ var widgetRegistry = { }
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
+var circuitRoot = "../"
 var renderers = [];
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +51,7 @@ async function init()
 	}
 
 	// Initialise registered component widgets
-	initComponentWidgets();
+	await initComponentWidgets();
 	return true;
 }
 
@@ -161,7 +163,7 @@ function registerComponentWidget(widgetDescriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function initComponentWidgets()
+async function initComponentWidgets()
 {
 	// For each registered widget....
 	for (var widgetName in widgetRegistry)
@@ -176,10 +178,18 @@ function initComponentWidgets()
 
 		// Create widget renderer and inject into component descriptor
 		var widgetDescriptor = widgetRegistry[widgetName];
-		componentDescriptor.widget = widgetDescriptor.create();
+		var widgetInstance = widgetDescriptor.create();
+
+		// Load widget image
+		var componentName = widgetName;
+		var widgetImageUrl = `${circuitRoot}/components/${componentName}/img/${widgetDescriptor.image.file}`;
+		widgetInstance.image = await circuit_util.loadImage(widgetImageUrl);
 
 		// Store descriptor onto widget
-		componentDescriptor.widget.descriptor = widgetDescriptor;
+		widgetInstance.descriptor = widgetDescriptor;
+
+		// Store widget onto component descriptor
+		componentDescriptor.widget = widgetInstance;
 	}
 }
 

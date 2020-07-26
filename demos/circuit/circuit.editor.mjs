@@ -10,10 +10,10 @@ import * as circuit_canvas from "./renderers/circuit.render.canvas.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // External dependencies
-const jqueryLib = "third-party/jquery/jquery.js";			// jQuery
-const jqueryUILib = "third-party/jquery/jquery-ui.min.js";	// jQuery UI (js)
-const jqueryCss = "third-party/jquery/jquery-ui.min.css";	// jQuery UI (css)
-const editorCss = "circuit.editor.css";						// Editor css
+const jqueryLib = "third-party/jquery/jquery.js";           // jQuery
+const jqueryUILib = "third-party/jquery/jquery-ui.min.js";  // jQuery UI (js)
+const jqueryCss = "third-party/jquery/jquery-ui.min.css";   // jQuery UI (css)
+const editorCss = "circuit.editor.css";                     // Editor css
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Config
@@ -118,7 +118,7 @@ function initComponentPicker()
 		// Create item html
 		var componentName = componentDescriptor.name;
 		var componentDisplayName = widgetDescriptor.displayName, componentDescription = widgetDescriptor.description;
-		var componentIcon = `${circuitRoot}/components/${componentName}/img/${widgetDescriptor.imageIcon}`;
+		var componentIcon = `${circuitRoot}/components/${componentName}/img/${widgetDescriptor.imageIcon.file}`;
 		var componmentPickerItemHtml = "";
 		componmentPickerItemHtml += `<div class='editor_component_picker_item'>`;
 		componmentPickerItemHtml += `  <div class='icon' style="background-image: url('${componentIcon}')"/>`;

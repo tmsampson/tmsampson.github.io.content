@@ -6,7 +6,8 @@ import * as circuit_utils from "../js/circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // External dependencies
-const jqueryMouseWheelPlugin = "third-party/jquery/jquery.mousewheel.min.js";
+const jqueryLib = "third-party/jquery/jquery.js";                              // jQuery
+const jqueryMouseWheelPlugin = "third-party/jquery/jquery.mousewheel.min.js";  // jQuery mouse wheel plugin
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Self registration
@@ -25,7 +26,14 @@ class CircuitCanvasRenderer
 
 	async load()
 	{
-		// Load jquery mousehweel plugin dynamically (cannot currently be imported as ES module)
+		// Load jquery module (if not already loaded)
+		if(!window.jQuery && !await circuit_utils.loadScript(jqueryLib))
+		{
+			console.error("Failed to load jQuery");
+			return false;
+		}
+
+		// Load jquery mousehweel plugin
 		if(!await circuit_utils.loadScript(jqueryMouseWheelPlugin))
 		{
 			console.error("Failed to load jQuery mouse wheel plugin");
@@ -126,6 +134,10 @@ class CircuitCanvasWorkspaceRenderer
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, scale : 1.0 };
 
+		// Init config
+		this.minZoom = 0.2;
+		this.maxZoom = 25.0;
+
 		// Store workspace
 		this.workspace = workspace;
 
@@ -158,7 +170,8 @@ class CircuitCanvasWorkspaceRenderer
 		var ctx = this.ctx;
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-		// Render components
+		// Render component
+		var scale = this.view.scale;
 		var components = this.workspace.components;
 		for(var i = 0; i < components.length; ++i)
 		{
@@ -170,11 +183,22 @@ class CircuitCanvasWorkspaceRenderer
 				continue;
 			}
 
-			// Draw rectangle
-			var workspacePos = { x: componentPosition.x - 10, y: componentPosition.y - 10 };
-			var viewPos = this.workspacePositionToViewPosition(workspacePos);
-			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
-			ctx.fillRect(viewPos.x, viewPos.y, 20 * this.view.scale, 20 * this.view.scale);
+			// Skip components without a valid widget
+			var widget = component.descriptor.widget;
+			if(widget == null || widget.image == null)
+			{
+				continue;
+			}
+
+			// Calculate widget view position
+			var widgetImage = widget.image;
+			var widgetWidth = widget.descriptor.image.width;
+			var widgetHeight = widget.descriptor.image.height;
+			var widgetWorkspaceOrigin = { x: componentPosition.x - (widgetWidth / 2), y: componentPosition.y - (widgetHeight / 2) };
+			var widgetViewPosition = this.workspacePositionToViewPosition(widgetWorkspaceOrigin);
+
+			// Draw widget image
+			ctx.drawImage(widgetImage, widgetViewPosition.x, widgetViewPosition.y, widgetWidth * scale, widgetHeight * scale);
 		}
 	}
 
@@ -267,7 +291,8 @@ class CircuitCanvasWorkspaceRenderer
 
 	modifyZoom(zoomAmount)
 	{
-		this.view.scale *= (1 + zoomAmount);
+		var newScale = this.view.scale * (1 + zoomAmount);
+		this.view.scale = circuit_utils.clamp(newScale, this.minZoom, this.maxZoom);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
