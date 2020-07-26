@@ -139,10 +139,17 @@ class CircuitCanvasWorkspaceRenderer
 			}
 
 			// Draw rectangle
-			var x = (componentPosition.x - 10) + this.view.focus.x;
-			var y = (componentPosition.y - 10) + this.view.focus.y;
+			var scale = this.view.scale;
+			var viewCentrePos = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+			var workspacePos = { x: componentPosition.x - 10, y: componentPosition.y - 10 };
+			var viewPos = { x: workspacePos.x - viewCentrePos.x, y: workspacePos.y - viewCentrePos.y }
+			var viewPosPanned = { x: viewPos.x + this.view.focus.x, y: viewPos.y + this.view.focus.y };
+			var viewPosScaled = { x: viewPosPanned.x * scale, y: viewPosPanned.y * scale };
+			
+			var x = viewPosScaled.x + viewCentrePos.x;
+			var y = viewPosScaled.y + viewCentrePos.y;
 			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
-			ctx.fillRect(x, y, 20, 20);
+			ctx.fillRect(x, y, 20 * this.view.scale, 20 * this.view.scale);
 		}
 	}
 
@@ -152,9 +159,19 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		switch(e.which)
 		{
+			case 1:
+			{
+				this.view.scale += 0.2;
+				break;
+			}
 			case 2:
 			{
 				this.startPanning(e.pageX, e.pageY);
+				break;
+			}
+			case 3:
+			{
+				this.view.scale -= 0.2;
 				break;
 			}
 		}
@@ -199,8 +216,8 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		// Apply pan offset to view
 		var delta = { x: x - this.panOrigin.x, y: y - this.panOrigin.y };
-		this.view.focus.x += delta.x;
-		this.view.focus.y += delta.y;
+		this.view.focus.x += delta.x * (1 / this.view.scale );
+		this.view.focus.y += delta.y * (1 / this.view.scale );
 
 		// Update pan origin
 		this.panOrigin.x = x;
