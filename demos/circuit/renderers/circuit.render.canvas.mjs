@@ -251,16 +251,10 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		var focus = this.view.focus, scale = this.view.scale;
 		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
-		var pos = viewPosition;
-		pos.x -= canvasCentre.x;
-		pos.y -= canvasCentre.y;
-		pos.x /= scale;
-		pos.y /= scale;
-		pos.x -= focus.x;
-		pos.y -= focus.y;
-		pos.x += canvasCentre.x;
-		pos.y += canvasCentre.y;
-		return { x: pos.x, y: pos.y };
+		var workspacePostion = { x: viewPosition.x - canvasCentre.x, y: viewPosition.y - canvasCentre.y };
+		workspacePostion.x /= scale; workspacePostion.y /= scale;     // Remove zoom
+		workspacePostion.x -= focus.x; workspacePostion.y -= focus.y; // Remove pan
+		return { x: workspacePostion.x + canvasCentre.x, y: workspacePostion.y + canvasCentre.y };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
