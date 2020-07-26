@@ -152,7 +152,24 @@ function getComponentRegistry()
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Rendering
+function getRenderers()
+{
+	return circuit_render.getRenderers();
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { init, registerComponent, createWorkspace, createComponent, createComponentByName, getComponentRegistry, getComponentDescriptor }
+export
+{
+	init,
+	registerComponent,
+	createWorkspace,
+	createComponent,
+	createComponentByName,
+	getComponentRegistry,
+	getComponentDescriptor,
+	getRenderers
+}
 
 // -------------------------------------------------------------------------------------------------------------------------

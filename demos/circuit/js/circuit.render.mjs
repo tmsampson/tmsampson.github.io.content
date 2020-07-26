@@ -124,7 +124,18 @@ function validateRenderer(renderer)
 	{
 		return { value: false, message: "Renderer has no onCreateWorkspace function" };
 	}
+	if(!(typeof renderer.convertViewPosition === 'function'))
+	{
+		return { value: false, message: "Renderer has no convertViewPosition function" };
+	}
 	return { value: true, message: "" };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function getRenderers()
+{
+	return renderers;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -182,4 +193,13 @@ function onCreateWorkspace(workspace, renderContainer)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { registerRenderer, registerComponentWidget, init, onCreateWorkspace }
+export
+{
+	registerRenderer,
+	getRenderers,
+	registerComponentWidget,
+	init,
+	onCreateWorkspace
+}
+
+// -------------------------------------------------------------------------------------------------------------------------

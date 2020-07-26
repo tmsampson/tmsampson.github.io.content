@@ -192,8 +192,12 @@ function onFinishDraggingComponentPickerItem(x, y)
 	// Hide icon
 	draggingComponentPickerItemIcon.hide("puff", { percent:150 }, 300);
 
+	// Perform view --> workspace position mapping
+	var viewPosition = { x: x, y: y };
+	var workspacePosition = workspace.convertViewPosition(viewPosition);
+
 	// Add component to workspace
-	workspace.addComponent(componentDescriptor, { position: { x: x, y: y } });
+	workspace.addComponent(componentDescriptor, { position: workspacePosition });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

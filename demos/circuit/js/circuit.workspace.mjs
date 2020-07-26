@@ -62,8 +62,24 @@ class CircuitWorkspace
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
+	
+	convertViewPosition(viewPosition)
+	{
+		// If renderer is present, ask for conversion, otherwise return unmodified view position
+		var renderers = circuit.getRenderers();
+		var renderer = (renderers.length > 0)? renderers[0] : null;
+		return renderer? renderer.convertViewPosition(this, viewPosition) : viewPosition;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Exports
-export { create, CircuitWorkspace }
+export
+{
+	create,
+	CircuitWorkspace
+}
+
+// -------------------------------------------------------------------------------------------------------------------------

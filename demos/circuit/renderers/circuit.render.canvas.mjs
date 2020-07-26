@@ -33,13 +33,14 @@ class CircuitCanvasRenderer
 
 	startRendering(e)
 	{
-		var workspaces = this.workspaceRenderers;
+		var workspaceRenderers = this.workspaceRenderers;
 		function onRender()
 		{
-			// Render workspaces
-			for(var i = 0; i < workspaces.length; ++i)
+			// For each workspace renderer...
+			for(var i = 0; i < workspaceRenderers.length; ++i)
 			{
-				workspaces[i].onRender(e);
+				// Render workspace
+				workspaceRenderers[i].onRender(e);
 			}
 
 			// Request next render callback
@@ -57,6 +58,25 @@ class CircuitCanvasRenderer
 	{
 		var workspaceRenderer = new CircuitCanvasWorkspaceRenderer(workspace, renderContainer);
 		this.workspaceRenderers.push(workspaceRenderer);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	convertViewPosition(workspace, viewPosition)
+	{
+		// For each workspace renderer...
+		for(var i = 0; i < this.workspaceRenderers.length; ++i)
+		{
+			var workspaceRenderer = this.workspaceRenderers[i];
+			if(workspaceRenderer.workspace == workspace)
+			{
+				// Ask workspace renderer to map view position
+				return workspaceRenderer.convertViewPosition(viewPosition);
+			}
+		}
+
+		// Could not find renderer for this workspace, return unmodified view position
+		return viewPosition;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -112,6 +132,13 @@ class CircuitCanvasWorkspaceRenderer
 			ctx.fillStyle = (component.descriptor.name == "nand")? "blue" : "green";
 			ctx.fillRect(componentPosition.x-10, componentPosition.y-10, 20, 20);
 		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	convertViewPosition(viewPosition)
+	{
+		return { x: viewPosition.x + 100, y: viewPosition.y };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
