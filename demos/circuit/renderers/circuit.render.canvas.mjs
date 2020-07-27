@@ -205,16 +205,28 @@ class CircuitCanvasWorkspaceRenderer
 
 			// Skip components without a valid widget
 			var widget = component.descriptor.widget;
-			if(widget == null || widget.image == null)
+			if(widget == null)
 			{
 				continue;
 			}
 
-			// Calculate widget view position
-			var widgetImage = widget.image;
-			var widgetWidth = widget.descriptor.image.width;
-			var widgetHeight = widget.descriptor.image.height;
-			var widgetWorkspaceOrigin = { x: componentPosition.x - (widgetWidth / 2), y: componentPosition.y - (widgetHeight / 2) };
+			// Get image name
+			var renderImage = widget.getRenderImage(component);
+
+			// Get image descriptor
+			var imageDescriptor = widget.descriptor.images[renderImage.image];
+			if(imageDescriptor == null)
+			{
+				var widgetName = widget.descriptor.name;
+				var suggestion = "Please make sure this image is included in the widget descriptor";
+				console.error(`Widget '${widgetName}': Image '${widgetImageName}' provided via getImage() was not loaded. ${suggestion}`);
+				continue;
+			}
+
+			// Draw image
+			var widgetImage = imageDescriptor.loadedImage;
+			var widgetWidth = renderImage.width, widgetHeight = renderImage.height;
+			var widgetWorkspaceOrigin = { x: componentPosition.x - (widgetWidth * 0.5), y: componentPosition.y - (widgetHeight * 0.5) };
 			var widgetViewPosition = this.workspacePositionToViewPosition(widgetWorkspaceOrigin);
 
 			// Draw widget image

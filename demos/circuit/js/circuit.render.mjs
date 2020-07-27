@@ -179,7 +179,7 @@ function registerComponentWidget(widgetDescriptor)
 
 function validateWidgetDescriptor(widgetDescriptor)
 {
-	var requiredFields = [ "name", "displayName", "description", "category", "image", "imageIcon", "version"];
+	var requiredFields = [ "name", "displayName", "description", "category", "images", "icon", "version"];
 	var requiredFunctions = [ "create" ];
 	return circuit_utils.validateObject(widgetDescriptor, requiredFields, requiredFunctions);
 }
@@ -200,6 +200,7 @@ async function initComponentWidgets()
 		}
 
 		// Create widget instance
+		console.log(`Widget '${widgetName}': Initialising`);
 		var widgetDescriptor = widgetRegistry[widgetName];
 		var widgetInstance = widgetDescriptor.create();
 
@@ -207,14 +208,37 @@ async function initComponentWidgets()
 		var validationResult = validateWidgetInstance(widgetInstance);
 		if(!validationResult.value)
 		{
-			console.error(`Widget '${componentName}': Instance validation failed. ${validationResult.message}`);
+			console.error(`Widget '${widgetName}': Instance validation failed. ${validationResult.message}`);
 			continue;
 		}
 
-		// Load widget image
+		// Load widget images
 		var componentName = widgetName;
-		var widgetImageUrl = `${circuitRoot}components/${componentName}/img/${widgetDescriptor.image.file}`;
-		widgetInstance.image = await circuit_utils.loadImage(widgetImageUrl);
+		var widgetImageRoot = `${circuitRoot}components/${componentName}/img`;
+		for(var widgetImageName in widgetDescriptor.images)
+		{
+			// Validate image descriptor
+			var widgetImageDescriptor = widgetDescriptor.images[widgetImageName];
+			var imageDescriptorValidationResult = validateWidgetImageDescriptor(widgetImageDescriptor);
+			if(!imageDescriptorValidationResult)
+			{
+				console.error(`Widget '${widgetName}': Image '${widgetImageName}' descriptor validation failed. ${imageDescriptorValidationResult.message}`);
+				continue;
+			}
+
+			// Load image
+			var widgetImageSrc = `${widgetImageRoot}/${widgetImageDescriptor.file}`;
+			var loadedImage = await circuit_utils.loadImage(widgetImageSrc);
+			if(loadedImage == null)
+			{
+				console.error(`Widget '${widgetName}': Image '${widgetImageName}' failed to load (${widgetImageSrc})`);
+				continue;
+			}
+
+			// Store loaded image onto descriptor
+			console.log(`    - Widget '${widgetName}': Image '${widgetImageName}' loaded`);
+			widgetImageDescriptor.loadedImage = loadedImage;
+		}
 
 		// Store widget descriptor onto widget
 		widgetInstance.descriptor = widgetDescriptor;
@@ -228,7 +252,16 @@ async function initComponentWidgets()
 
 function validateWidgetInstance(widgetInstance)
 {
-	return { value: true, message: "" };
+	var requiredFields = [ ], requiredFunctions = [ "getRenderImage" ];
+	return circuit_utils.validateObject(widgetInstance, requiredFields, requiredFunctions);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateWidgetImageDescriptor(widgetImageDescriptor)
+{
+	var requiredFields = [ "file" ], requiredFunctions = [ ];
+	return circuit_utils.validateObject(widgetImageDescriptor, requiredFields, requiredFunctions);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

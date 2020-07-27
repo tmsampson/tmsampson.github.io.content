@@ -9,8 +9,11 @@ circuit_render.registerComponentWidget({
 	displayName: "Power Source",
 	description: "'Always On' Power source",
 	category: "Basic",
-	image: { file: "power_source.svg", width: 60, height: 60 },
-	imageIcon: { file: "power_source_icon.png" },
+	images:
+	{
+		"power_source" : { file: "power_source.svg" },
+	},
+	icon: { file: "power_source_icon.png" },
 	version: "1.0.0.0",
 	create: () => new PowerSourceWidget()
 });
@@ -19,9 +22,9 @@ circuit_render.registerComponentWidget({
 // Implementation
 class PowerSourceWidget
 {
-	constructor()
+	getRenderImage(component)
 	{
-		
+		return { image: "power_source", width: 60, height: 60 };
 	}
 }
 
