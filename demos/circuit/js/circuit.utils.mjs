@@ -41,7 +41,29 @@ function validateObject(object, requiredFields, requiredFunctions)
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Misc
+// Maths
+function pointInsideAABB(point, aabbBottomLeft, aabbSize)
+{
+	if(point.x < aabbBottomLeft.x) { return false; }
+	if(point.y < aabbBottomLeft.y) { return false; }
+	if(point.x > (aabbBottomLeft.x + aabbSize.x)) { return false; }
+	if(point.y > (aabbBottomLeft.y + aabbSize.y)) { return false; }
+	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function overlapAABB(aabbBottomLeft1, aabbSize1, aabbBottomLeft2, aabbSize2)
+{
+	if((aabbBottomLeft1.x + aabbSize1.x) < aabbBottomLeft2.x) { return false; }
+	if(aabbBottomLeft1.x > (aabbBottomLeft2.x + aabbSize2.x)) { return false; }
+	if((aabbBottomLeft1.y + aabbSize1.y) < aabbBottomLeft2.y) { return false; }
+	if(aabbBottomLeft1.y > (aabbBottomLeft2.y + aabbSize2.y)) { return false; }
+	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
 function clamp(x, min, max)
 {
 	return Math.min(Math.max(x, min), max);
@@ -65,6 +87,8 @@ export
 {
 	loadScript,
 	validateObject,
+	pointInsideAABB,
+	overlapAABB,
 	clamp,
 	loadImage
 }
