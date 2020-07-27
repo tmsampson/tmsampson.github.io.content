@@ -131,6 +131,7 @@ class CircuitCanvasWorkspaceRenderer
 	constructor(workspace, renderContainer)
 	{
 		// Init state
+		this.renderContainer = renderContainer;
 		this.isPanning = false;
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
@@ -154,9 +155,8 @@ class CircuitCanvasWorkspaceRenderer
 		this.canvas = canvas[0];
 		this.ctx = this.canvas.getContext('2d');
 
-		// Resize canvas
-		this.canvas.width  = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		// Resize canvas to match container
+		this.updateCanvasSize();
 
 		// Add canvas to page
 		renderContainer.append(this.canvas);
@@ -164,8 +164,19 @@ class CircuitCanvasWorkspaceRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	updateCanvasSize()
+	{
+		this.canvas.width = this.renderContainer.width();
+		this.canvas.height = this.renderContainer.height();
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	onUpdate(e)
 	{
+		// Resize canvas to match container
+		this.updateCanvasSize();
+		
 		// Update smooth zoom
 		var currentZoom = this.view.zoom, targetZoom = this.view.targetZoom, zoomSpeed = this.config.zoomSpeed;
 		this.view.zoom = (targetZoom * zoomSpeed) + (currentZoom * (1.0 - zoomSpeed));
