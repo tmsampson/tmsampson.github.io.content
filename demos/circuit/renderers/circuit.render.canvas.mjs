@@ -58,7 +58,8 @@ class CircuitCanvasRenderer
 			// For each workspace renderer...
 			for(var i = 0; i < workspaceRenderers.length; ++i)
 			{
-				// Render workspace
+				// Update and render workspace
+				workspaceRenderers[i].onUpdate(e);
 				workspaceRenderers[i].onRender(e);
 			}
 
@@ -132,11 +133,10 @@ class CircuitCanvasWorkspaceRenderer
 		// Init state
 		this.isPanning = false;
 		this.panOrigin = { }
-		this.view = { focus: { x: 0, y: 0 }, scale : 1.0 };
+		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
 
 		// Init config
-		this.minZoom = 0.2;
-		this.maxZoom = 25.0;
+		this.config = { minZoom: 0.2, maxZoom: 25.0, zoomSpeed: 0.15 };
 
 		// Store workspace
 		this.workspace = workspace;
@@ -164,6 +164,15 @@ class CircuitCanvasWorkspaceRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	onUpdate(e)
+	{
+		// Update smooth zoom
+		var currentZoom = this.view.zoom, targetZoom = this.view.targetZoom, zoomSpeed = this.config.zoomSpeed;
+		this.view.zoom = (targetZoom * zoomSpeed) + (currentZoom * (1.0 - zoomSpeed));
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	onRender(e)
 	{
 		// Clear canvas
@@ -171,7 +180,7 @@ class CircuitCanvasWorkspaceRenderer
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		// Render component
-		var scale = this.view.scale;
+		var zoom = this.view.zoom;
 		var components = this.workspace.components;
 		for(var i = 0; i < components.length; ++i)
 		{
@@ -198,7 +207,7 @@ class CircuitCanvasWorkspaceRenderer
 			var widgetViewPosition = this.workspacePositionToViewPosition(widgetWorkspaceOrigin);
 
 			// Draw widget image
-			ctx.drawImage(widgetImage, widgetViewPosition.x, widgetViewPosition.y, widgetWidth * scale, widgetHeight * scale);
+			ctx.drawImage(widgetImage, widgetViewPosition.x, widgetViewPosition.y, widgetWidth * zoom, widgetHeight * zoom);
 		}
 	}
 
@@ -271,8 +280,8 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		// Apply pan offset to view
 		var delta = { x: x - this.panOrigin.x, y: y - this.panOrigin.y };
-		this.view.focus.x += delta.x * (1 / this.view.scale );
-		this.view.focus.y += delta.y * (1 / this.view.scale );
+		this.view.focus.x += delta.x * (1 / this.view.zoom );
+		this.view.focus.y += delta.y * (1 / this.view.zoom );
 
 		// Update pan origin
 		this.panOrigin.x = x;
@@ -291,18 +300,18 @@ class CircuitCanvasWorkspaceRenderer
 
 	modifyZoom(zoomAmount)
 	{
-		var newScale = this.view.scale * (1 + zoomAmount);
-		this.view.scale = circuit_utils.clamp(newScale, this.minZoom, this.maxZoom);
+		var newTargetZoom = this.view.targetZoom * (1 + zoomAmount);
+		this.view.targetZoom = circuit_utils.clamp(newTargetZoom, this.config.minZoom, this.config.maxZoom);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	viewPositionToWorkspacePosition(viewPosition)
 	{
-		var focus = this.view.focus, scale = this.view.scale;
+		var focus = this.view.focus, zoom = this.view.zoom;
 		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 		var workspacePostion = { x: viewPosition.x - canvasCentre.x, y: viewPosition.y - canvasCentre.y };
-		workspacePostion.x /= scale; workspacePostion.y /= scale;     // Remove zoom
+		workspacePostion.x /= zoom; workspacePostion.y /= zoom;     // Remove zoom
 		workspacePostion.x -= focus.x; workspacePostion.y -= focus.y; // Remove pan
 		return { x: workspacePostion.x + canvasCentre.x, y: workspacePostion.y + canvasCentre.y };
 	}
@@ -311,11 +320,11 @@ class CircuitCanvasWorkspaceRenderer
 
 	workspacePositionToViewPosition(workspacePosition)
 	{
-		var focus = this.view.focus, scale = this.view.scale;
+		var focus = this.view.focus, zoom = this.view.zoom;
 		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 		var viewPosition = { x: workspacePosition.x - canvasCentre.x, y: workspacePosition.y - canvasCentre.y }
 		viewPosition.x += focus.x; viewPosition.y += focus.y; // Apply pan
-		viewPosition.x *= scale; viewPosition.y *= scale;     // Apply zoom
+		viewPosition.x *= zoom; viewPosition.y *= zoom;     // Apply zoom
 		return { x: viewPosition.x + canvasCentre.x, y: viewPosition.y + canvasCentre.y };
 	}
 
