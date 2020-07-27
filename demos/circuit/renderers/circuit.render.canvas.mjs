@@ -343,7 +343,7 @@ class CircuitCanvasWorkspaceRenderer
 	stopPanning(x, y)
 	{
 		this.isPanning = false;
-		this.canvas.style.cursor = "pointer";
+		this.canvas.style.cursor = "default";
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
