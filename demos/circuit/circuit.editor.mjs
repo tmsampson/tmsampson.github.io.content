@@ -29,6 +29,7 @@ var workspace = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // UI
+var canvasContainer = null;
 var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
 
@@ -58,14 +59,30 @@ async function init()
 	// Setup toolbar
 	initToolbar();
 
+	// Grab canvas container
+	canvasContainer = $("#editor_canvas_container");
+
+	// Make canvas container full-screen
+	resizeCanvasContainer();
+
+	// Make sure canvas container resizes with screen
+	$(window).resize(() => resizeCanvasContainer());
+
 	// Create workspace for editor
-	var canvasContainer = $("#editor_canvas_container");
 	workspace = circuit.createWorkspace("editor", canvasContainer);
 
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
 	$("#editor_canvas_container canvas").on("mouseup", (e) => onCanvasMouseUp(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function resizeCanvasContainer()
+{
+	canvasContainer.css("width", window.innerWidth);
+	canvasContainer.css("height", window.innerHeight);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
