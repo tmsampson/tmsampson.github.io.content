@@ -19,14 +19,14 @@ function registerRenderer(rendererDescriptor)
 {
 	// Check to ensure this renderer is not already registered
 	var rendererName = rendererDescriptor.name;
-	console.log(`Registering renderer: ${rendererName}`);
 	if(rendererRegistry.hasOwnProperty(rendererName))
 	{
-		console.error(`Renderer '${rendererName}' already registered`);
+		console.error(`Renderer '${rendererName}': Already registered`);
 		return;
 	}
 
 	// Add to registry
+	console.log(`Renderer '${rendererName}': Registered`);
 	rendererRegistry[rendererName] = rendererDescriptor;
 }
 
@@ -63,7 +63,7 @@ async function initRenderers()
 	for (var rendererName in rendererRegistry)
 	{
 		// Create renderer
-		console.log(`Initialising renderer: ${rendererName}`);
+		console.log(`Renderer '${rendererName}': Initialising`);
 		var rendererDescriptor = rendererRegistry[rendererName];
 		var result = createRenderer(rendererDescriptor);
 
@@ -78,7 +78,7 @@ async function initRenderers()
 		// Load renderer
 		if(!await renderer.load())
 		{
-			console.error(`Renderer ${rendererName} failed to load`);
+			console.error(`Renderer '${rendererName}': Failed to load`);
 			return false;
 		}
 
@@ -152,13 +152,61 @@ function registerComponentWidget(widgetDescriptor)
 	var componentName = widgetDescriptor.name;
 	if(widgetRegistry.hasOwnProperty(componentName))
 	{
-		console.error(`Widget for component '${componentName}' already registered`);
-		return;
+		console.error(`Widget '${componentName}': Already registered`);
+		return false;
+	}
+
+	// Validate widget descriptor
+	var validationResult = validateWidgetDescriptor(widgetDescriptor);
+	if(!validationResult.value)
+	{
+		console.error(`Widget '${componentName}': Descriptor validation failed. ${validationResult.message}`);
+		return false;
 	}
 
 	// Add to registry
 	widgetRegistry[componentName] = widgetDescriptor;
-	console.log(`Registering widget: ${componentName}`);
+	console.log(`Widget '${componentName}': Registered`);
+	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateWidgetDescriptor(widgetDescriptor)
+{
+	if(!widgetDescriptor.hasOwnProperty("name"))
+	{
+		return { value: false, message: "Widget descriptor has no 'name' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("displayName"))
+	{
+		return { value: false, message: "Widget descriptor has no 'displayName' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("description"))
+	{
+		return { value: false, message: "Widget descriptor has no 'description' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("category"))
+	{
+		return { value: false, message: "Widget descriptor has no 'catgeory' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("image"))
+	{
+		return { value: false, message: "Widget descriptor has no 'image' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("imageIcon"))
+	{
+		return { value: false, message: "Widget descriptor has no 'imageIcon' field" };
+	}
+	if(!widgetDescriptor.hasOwnProperty("version"))
+	{
+		return { value: false, message: "Widget descriptor has no 'version' field" };
+	}
+	if(!(typeof widgetDescriptor.create === 'function'))
+	{
+		return { value: false, message: "Widget descriptor has no 'create' function" };
+	}
+	return { value: true, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -172,25 +220,40 @@ async function initComponentWidgets()
 		var componentDescriptor = circuit.getComponentDescriptor(widgetName);
 		if(componentDescriptor == null)
 		{
-			console.error(`Could not find matching component for '${widgetName}' widget`);
-			return;
+			console.error(`Widget '${widgetName}': Could not find matching registered component`);
+			continue;
 		}
 
-		// Create widget renderer and inject into component descriptor
+		// Create widget instance
 		var widgetDescriptor = widgetRegistry[widgetName];
 		var widgetInstance = widgetDescriptor.create();
+
+		// Validate widget descriptor
+		var validationResult = validateWidgetInstance(widgetInstance);
+		if(!validationResult.value)
+		{
+			console.error(`Widget '${componentName}': Instance validation failed. ${validationResult.message}`);
+			continue;
+		}
 
 		// Load widget image
 		var componentName = widgetName;
 		var widgetImageUrl = `${circuitRoot}components/${componentName}/img/${widgetDescriptor.image.file}`;
 		widgetInstance.image = await circuit_util.loadImage(widgetImageUrl);
 
-		// Store descriptor onto widget
+		// Store widget descriptor onto widget
 		widgetInstance.descriptor = widgetDescriptor;
 
 		// Store widget onto component descriptor
 		componentDescriptor.widget = widgetInstance;
 	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateWidgetInstance(widgetInstance)
+{
+	return { value: true, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

@@ -160,7 +160,7 @@ function onMouseMove(e)
 function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 {
 	var componentName = componentPickerItem.data().componentDescriptor.name;
-	console.log(`Started dragging component picker item: ${componentName}`);
+	console.log(`Started dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = componentPickerItem;
 
 	// Show and move icon
@@ -174,7 +174,7 @@ function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 function onCancelDraggingComponentPickerItem()
 {
 	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
-	console.log(`Cancel dragging component picker item: ${componentName}`);
+	console.log(`Cancel dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
 
 	// Hide icon
@@ -187,7 +187,7 @@ function onFinishDraggingComponentPickerItem(x, y)
 {
 	var componentDescriptor = draggingComponentPickerItem.data().componentDescriptor;
 	var componentName = componentDescriptor.name;
-	console.log(`Finish dragging component picker item: ${componentName}`);
+	console.log(`Finish dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
 
 	// Hide icon

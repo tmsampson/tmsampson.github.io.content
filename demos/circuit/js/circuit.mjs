@@ -47,14 +47,41 @@ function registerComponent(componentDescriptor)
 	var componentName = componentDescriptor.name;
 	if(componentRegistry.hasOwnProperty(componentName))
 	{
-		console.error(`Component '${componentName}' already registered`);
+		console.error(`Component '${componentName}': Already registered`);
 		return;
+	}
+
+	// Validate component descriptor
+	var validationResult = validateComponentDescriptor(componentDescriptor);
+	if(!validationResult.value)
+	{
+		console.error(`Component '${componentName}': Descriptor validation failed. ${validationResult.message}`);
+		return false;
 	}
 
 	// Add to registry
 	componentRegistry[componentName] = componentDescriptor;
-	console.log(`Registering component: ${componentName}`);
+	console.log(`Component '${componentName}': Registered`);
 };
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateComponentDescriptor(componentDescriptor)
+{
+	if(!componentDescriptor.hasOwnProperty("name"))
+	{
+		return { value: false, message: "Component descriptor has no 'name' field" };
+	}
+	if(!componentDescriptor.hasOwnProperty("version"))
+	{
+		return { value: false, message: "Component descriptor has no 'version' field" };
+	}
+	if(!(typeof componentDescriptor.create === 'function'))
+	{
+		return { value: false, message: "Component descriptor has no 'create' function" };
+	}
+	return { value: true, message: "" };
+}
 
 // -------------------------------------------------------------------------------------------------------------------------
 
@@ -64,14 +91,14 @@ function createComponent(descriptor, args)
 	var componentName = descriptor.name;
 	if(!componentRegistry.hasOwnProperty(componentName))
 	{
-		return { value: null, message: `Component ${componentName} has not been registered` };
+		return { value: null, message: `Component '${componentName}': Was not registered` };
 	}
 
 	// Create component instance and set name
 	var component = componentRegistry[componentName].create();
 	if(component == null)
 	{
-		return { value: null, message: `Component ${componentName} has not been registered` };
+		return { value: null, message: `Component '${componentName}': Creation failed` };
 	}
 
 	// Store descriptor and args onto component
@@ -79,7 +106,7 @@ function createComponent(descriptor, args)
 	component.args = args;
 	
 	// Validate component instance
-	var validationResult = validateComponent(component);
+	var validationResult = validateComponentInstance(component);
 	if(!validationResult.value)
 	{
 		return { value: null, message: validationResult.message };
@@ -104,15 +131,15 @@ function createComponentByName(componentName, args)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function validateComponent(component)
+function validateComponentInstance(component)
 {
 	if(!component.hasOwnProperty("descriptor"))
 	{
-		return { value: false, message: "Component has no descriptor" };
+		return { value: false, message: "Component has no 'descriptor' field" };
 	}
 	if(!component.descriptor.hasOwnProperty("name"))
 	{
-		return { value: false, message: "Component has no name" };
+		return { value: false, message: "Component descriptor has no 'name' field" };
 	}
 	if(!component.hasOwnProperty("inputs"))
 	{
@@ -136,7 +163,7 @@ function getComponentDescriptor(componentName)
 	// Check to ensure this component is not already registered
 	if(!componentRegistry.hasOwnProperty(componentName))
 	{
-		console.error(`Could not find descriptor for component '${componentName}'`);
+		console.error(`Component '${componentName}': Could not find descriptor`);
 		return null;
 	}
 
