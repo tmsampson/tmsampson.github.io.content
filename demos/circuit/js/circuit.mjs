@@ -2,6 +2,7 @@
 // Imports
 import * as circuit_render from "./circuit.render.mjs"
 import * as circuit_workspace from "./circuit.workspace.mjs"
+import * as circuit_utils from "./circuit.utils.mjs"
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Constants
@@ -48,7 +49,7 @@ function registerComponent(componentDescriptor)
 	if(componentRegistry.hasOwnProperty(componentName))
 	{
 		console.error(`Component '${componentName}': Already registered`);
-		return;
+		return false;
 	}
 
 	// Validate component descriptor
@@ -62,25 +63,16 @@ function registerComponent(componentDescriptor)
 	// Add to registry
 	componentRegistry[componentName] = componentDescriptor;
 	console.log(`Component '${componentName}': Registered`);
+	return true;
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
 
 function validateComponentDescriptor(componentDescriptor)
 {
-	if(!componentDescriptor.hasOwnProperty("name"))
-	{
-		return { value: false, message: "Component descriptor has no 'name' field" };
-	}
-	if(!componentDescriptor.hasOwnProperty("version"))
-	{
-		return { value: false, message: "Component descriptor has no 'version' field" };
-	}
-	if(!(typeof componentDescriptor.create === 'function'))
-	{
-		return { value: false, message: "Component descriptor has no 'create' function" };
-	}
-	return { value: true, message: "" };
+	var requiredFields = [ "name", "version" ];
+	var reqiredFunctions = [ "create" ];
+	return circuit_utils.validateObject(componentDescriptor, requiredFields, reqiredFunctions);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -133,27 +125,9 @@ function createComponentByName(componentName, args)
 
 function validateComponentInstance(component)
 {
-	if(!component.hasOwnProperty("descriptor"))
-	{
-		return { value: false, message: "Component has no 'descriptor' field" };
-	}
-	if(!component.descriptor.hasOwnProperty("name"))
-	{
-		return { value: false, message: "Component descriptor has no 'name' field" };
-	}
-	if(!component.hasOwnProperty("inputs"))
-	{
-		return { value: false, message: "Component has no inputs (please provide empty array if no inputs are required)" };
-	}
-	if(!component.hasOwnProperty("outputs"))
-	{
-		return { value: false, message: "Component has no outputs (please provide empty array if no outputs are required)" };
-	}
-	if(!(typeof component.update === 'function'))
-	{
-		return { value: false, message: "Component has no update function" };
-	}
-	return { value: true, message: "" };
+	var requiredFields = [ "descriptor", "inputs", "outputs" ];
+	var reqiredFunctions = [ "update" ];
+	return circuit_utils.validateObject(component, requiredFields, reqiredFunctions);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

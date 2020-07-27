@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
 import * as circuit from "./circuit.mjs";
-import * as circuit_util from "./circuit.utils.mjs";
+import * as circuit_utils from "./circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Registration
@@ -22,12 +22,21 @@ function registerRenderer(rendererDescriptor)
 	if(rendererRegistry.hasOwnProperty(rendererName))
 	{
 		console.error(`Renderer '${rendererName}': Already registered`);
-		return;
+		return false;
+	}
+
+	// Validate renderer descriptor
+	var validationResult = validateRendererDescriptor(rendererDescriptor);
+	if(!validationResult.value)
+	{
+		console.error(`Renderer '${rendererName}': Descriptor validation failed. ${validationResult.message}`);
+		return false;
 	}
 
 	// Add to registry
 	console.log(`Renderer '${rendererName}': Registered`);
 	rendererRegistry[rendererName] = rendererDescriptor;
+	return true;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -91,50 +100,46 @@ async function initRenderers()
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function createRenderer(descriptor)
+function createRenderer(rendererDescriptor)
 {
-	// Create component instance and set name
-	var renderer = descriptor.create();
-	if(renderer == null)
+	// Create renderer
+	var rendererName = rendererDescriptor.name;
+	var rendererInstance = rendererDescriptor.create();
+	if(rendererInstance == null)
 	{
-		return { value: null, message: `Renderer ${rendererName} has not been registered` };
+		return { value: null, message: `Renderer '${rendererName}': Creation failed` };
 	}
 
 	// Store descriptor onto renderer
-	renderer.descriptor = descriptor;
+	rendererInstance.descriptor = rendererDescriptor;
 
 	// Validate renderer instance
-	var validationResult = validateRenderer(renderer);
+	var validationResult = validateRendererInstance(rendererInstance);
 	if(!validationResult.value)
 	{
-		return { value: null, message: validationResult.message };
+		return { value: null, message: `Renderer '${rendererName}': Validation failed. ${validationResult.message}` };
 	}
 
 	// Component successfully created
-	return { value: renderer, message: "" };
+	return { value: rendererInstance, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function validateRenderer(renderer)
+function validateRendererDescriptor(rendererDescriptor)
 {
-	if(!(typeof renderer.load === 'function'))
-	{
-		return { value: false, message: "Renderer has no init function" };
-	}
-	if(!(typeof renderer.onCreateWorkspace === 'function'))
-	{
-		return { value: false, message: "Renderer has no onCreateWorkspace function" };
-	}
-	if(!(typeof renderer.viewPositionToWorkspacePosition === 'function'))
-	{
-		return { value: false, message: "Renderer has no viewPositionToWorkspacePosition function" };
-	}
-	if(!(typeof renderer.workspacePositionToViewPosition === 'function'))
-	{
-		return { value: false, message: "Renderer has no workspacePositionToViewPosition function" };
-	}
-	return { value: true, message: "" };
+	var requiredFields = [ "name", "description", "version"];
+	var requiredFunctions = [ "create" ];
+	return circuit_utils.validateObject(rendererDescriptor, requiredFields, requiredFunctions);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function validateRendererInstance(renderer)
+{
+	var requiredFields = [];
+	var requiredFunctions = [ "load", "onCreateWorkspace", "viewPositionToWorkspacePosition", "workspacePositionToViewPosition" ];
+	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -174,39 +179,9 @@ function registerComponentWidget(widgetDescriptor)
 
 function validateWidgetDescriptor(widgetDescriptor)
 {
-	if(!widgetDescriptor.hasOwnProperty("name"))
-	{
-		return { value: false, message: "Widget descriptor has no 'name' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("displayName"))
-	{
-		return { value: false, message: "Widget descriptor has no 'displayName' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("description"))
-	{
-		return { value: false, message: "Widget descriptor has no 'description' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("category"))
-	{
-		return { value: false, message: "Widget descriptor has no 'catgeory' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("image"))
-	{
-		return { value: false, message: "Widget descriptor has no 'image' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("imageIcon"))
-	{
-		return { value: false, message: "Widget descriptor has no 'imageIcon' field" };
-	}
-	if(!widgetDescriptor.hasOwnProperty("version"))
-	{
-		return { value: false, message: "Widget descriptor has no 'version' field" };
-	}
-	if(!(typeof widgetDescriptor.create === 'function'))
-	{
-		return { value: false, message: "Widget descriptor has no 'create' function" };
-	}
-	return { value: true, message: "" };
+	var requiredFields = [ "name", "displayName", "description", "category", "image", "imageIcon", "version"];
+	var requiredFunctions = [ "create" ];
+	return circuit_utils.validateObject(widgetDescriptor, requiredFields, requiredFunctions);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -239,7 +214,7 @@ async function initComponentWidgets()
 		// Load widget image
 		var componentName = widgetName;
 		var widgetImageUrl = `${circuitRoot}components/${componentName}/img/${widgetDescriptor.image.file}`;
-		widgetInstance.image = await circuit_util.loadImage(widgetImageUrl);
+		widgetInstance.image = await circuit_utils.loadImage(widgetImageUrl);
 
 		// Store widget descriptor onto widget
 		widgetInstance.descriptor = widgetDescriptor;
