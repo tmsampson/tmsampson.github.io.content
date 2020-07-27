@@ -135,6 +135,7 @@ class CircuitCanvasWorkspaceRenderer
 		this.isPanning = false;
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
+		this.componentUnderCursor = null;
 
 		// Init config
 		this.config = { minZoom: 0.2, maxZoom: 25.0, zoomSpeed: 0.15 };
@@ -188,7 +189,11 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		// Clear canvas
 		var ctx = this.ctx;
-		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		var viewBottomLeft = { x: 0, y: 0 }, viewSize = { x: this.canvas.width, y: this.canvas.height };
+		ctx.clearRect(viewBottomLeft.x, viewBottomLeft.y, viewSize.x, viewSize.y);
+
+		// Clear state
+		this.componentUnderCursor = null;
 
 		// Render component
 		var zoom = this.view.zoom;
@@ -214,24 +219,44 @@ class CircuitCanvasWorkspaceRenderer
 			var renderImage = widget.getRenderImage(component);
 
 			// Get image descriptor
+			var widgetName = widget.descriptor.name;
 			var imageDescriptor = widget.descriptor.images[renderImage.image];
 			if(imageDescriptor == null)
 			{
-				var widgetName = widget.descriptor.name;
 				var suggestion = "Please make sure this image is included in the widget descriptor";
 				console.error(`Widget '${widgetName}': Image '${widgetImageName}' provided via getImage() was not loaded. ${suggestion}`);
 				continue;
 			}
 
-			// Draw image
+			// Calculate view position / size
 			var widgetImage = imageDescriptor.loadedImage;
-			var widgetWidth = renderImage.width, widgetHeight = renderImage.height;
-			var widgetWorkspaceOrigin = { x: componentPosition.x - (widgetWidth * 0.5), y: componentPosition.y - (widgetHeight * 0.5) };
-			var widgetViewPosition = this.workspacePositionToViewPosition(widgetWorkspaceOrigin);
+			var widgetSize = { x: renderImage.width, y: renderImage.height };
+			var widgetWorkspacePositionBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
+			var widgetViewPositionBottomLeft = this.workspacePositionToViewPosition(widgetWorkspacePositionBottomLeft);
+			var widgetViewSize = { x: widgetSize.x * zoom, y: widgetSize.y * zoom };
+
+			// Skip components outside of view
+			if(!circuit_utils.overlapAABB(viewBottomLeft, viewSize, widgetViewPositionBottomLeft, widgetViewSize))
+			{
+				continue;
+			}
+
+			// Check if under cursor
+			if(this.componentUnderCursor == null)
+			{
+				if(circuit_utils.pointInsideAABB(this.cursorPositionView, widgetViewPositionBottomLeft, widgetViewSize))
+				{
+					this.componentUnderCursor = component;
+				}
+			}
 
 			// Draw widget image
-			ctx.drawImage(widgetImage, widgetViewPosition.x, widgetViewPosition.y, widgetWidth * zoom, widgetHeight * zoom);
+			ctx.drawImage(widgetImage, widgetViewPositionBottomLeft.x, widgetViewPositionBottomLeft.y, widgetViewSize.x, widgetViewSize.y);
 		}
+
+		// Debug
+		var componentUnderCursorName = (this.componentUnderCursor != null)? this.componentUnderCursor.descriptor.name : "none";
+		console.log(`Component under cursor: ${componentUnderCursorName}`);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -274,6 +299,8 @@ class CircuitCanvasWorkspaceRenderer
 
 	onCanvasMouseMove(e)
 	{
+		this.cursorPositionView = { x: e.pageX, y: e.pageY };
+		this.cursorPositionWorkspace = this.viewPositionToWorkspacePosition(this.cursorPositionView);
 		if(this.isPanning)
 		{
 			this.updatePanning(e.pageX, e.pageY);
