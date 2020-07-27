@@ -222,8 +222,10 @@ function onFinishDraggingComponentPickerItem(x, y)
 
 function updateDraggingComponentPickerItemIconPosition(x, y)
 {
-	draggingComponentPickerItemIcon.css("left", x  - 26);
-	draggingComponentPickerItemIcon.css("top", y - 26);
+	var iconWidth = draggingComponentPickerItemIcon.width();
+	var iconHeight = draggingComponentPickerItemIcon.height();
+	draggingComponentPickerItemIcon.css("left", x  - (iconWidth * 0.5));
+	draggingComponentPickerItemIcon.css("top", y - (iconHeight * 0.5));
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
