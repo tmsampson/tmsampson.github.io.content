@@ -110,19 +110,6 @@ function createComponent(descriptor, args)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function createComponentByName(componentName, args)
-{
-	var componentDescriptor = getComponentDescriptor(componentName);
-	if(componentDescriptor == null)
-	{
-		return null;
-	}
-
-	return createComponent(componentDescriptor, args)
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
 function validateComponentInstance(component)
 {
 	var requiredFields = [ "descriptor", "inputs", "outputs" ];
@@ -166,10 +153,9 @@ export
 	init,
 	registerComponent,
 	createWorkspace,
-	createComponent,
-	createComponentByName,
 	getComponentRegistry,
 	getComponentDescriptor,
+	createComponent,
 	getRenderers
 }
 

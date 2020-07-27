@@ -34,6 +34,9 @@ class CircuitWorkspace
 			return null;
 		}
 
+		// Assign ID
+		componentInstance.id = this.generateComponentId();
+
 		// Add component to workspace
 		console.log(`Workspace '${this.name}': Adding component '${componentDescriptor.name}'`);
 		this.components.push(componentInstance);
@@ -47,18 +50,23 @@ class CircuitWorkspace
 	addComponentByName(componentName, args)
 	{
 		// Create component instance
-		var componentInstance = circuit.createComponentByName(componentName, args);
+		var componentDescriptor = circuit.getComponentDescriptor(componentName);
 		if(componentInstance == null)
 		{
+			console.log(`Workspace '${this.name}': Adding component '${componentName}' failed`);
 			return null;
 		}
 
-		// Add component to workspace
-		console.log(`Workspace '${this.name}': Adding component '${componentName}'`);
-		this.components.push(componentInstance);
+		// Add component using descriptor
+		return this.addComponent(componentDescriptor);
+	}
 
-		// Component successfully added
-		return componentInstance;
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	generateComponentId()
+	{
+		// For now, just use a counter
+		return this.components.length;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
