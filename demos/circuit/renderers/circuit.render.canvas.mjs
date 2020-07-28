@@ -19,6 +19,15 @@ circuit_render.registerRenderer({
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Enums
+const SnapPointViewMode =
+{
+	HIDE: "hide",
+	SHOW: "show",
+	SHOW_WHILST_DRAGGING: "whilstDragging"
+};
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Implementation
 class CircuitCanvasRenderer
 {
@@ -138,7 +147,15 @@ class CircuitCanvasWorkspaceRenderer
 		this.componentUnderCursor = null;
 
 		// Init config
-		this.config = { minZoom: 0.2, maxZoom: 25.0, zoomSpeed: 0.15, gridSnapSpacing: 100, gridSnapRadius: 20 };
+		this.config =
+		{
+			minZoom: 0.2,
+			maxZoom: 25.0,
+			zoomSpeed: 0.15,
+			gridSnapSpacing: 100,
+			gridSnapRadius: 20,
+			snapPointViewMode: SnapPointViewMode.SHOW
+		};
 
 		// Store workspace
 		this.workspace = workspace;
@@ -254,19 +271,47 @@ class CircuitCanvasWorkspaceRenderer
 			ctx.drawImage(widgetImage, widgetViewPositionBottomLeft.x, widgetViewPositionBottomLeft.y, widgetViewSize.x, widgetViewSize.y);
 		}
 
-		// Draw grid snap points
-		var snapPointSpacing = this.config.gridSnapSpacing, tau = (2 * Math.PI);
-		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0), border = 1.0;
-		var workspaceBottomLeft = this.viewPositionToWorkspacePosition(viewBottomLeft), workspaceTopRight = this.viewPositionToWorkspacePosition(viewSize);
-		var firstSnapPointX = workspaceBottomLeft.x - (workspaceBottomLeft.x % snapPointSpacing);
-		var firstSnapPointY = workspaceBottomLeft.y - (workspaceBottomLeft.y % snapPointSpacing);
-		var snapPointRepeatsX = Math.floor((workspaceTopRight.x - firstSnapPointX) / snapPointSpacing);
-		var snapPointRepeatsY = Math.floor((workspaceTopRight.y - firstSnapPointY) / snapPointSpacing);
+		// Render grid snap points?
+		if(this.config.snapPointViewMode == SnapPointViewMode.SHOW)
+		{
+			this.renderGridSnapPoints();
+		}
 
+		// Debug
+		var componentUnderCursorName = (this.componentUnderCursor != null)? this.componentUnderCursor.descriptor.name : "none";
+		console.log(`Component under cursor: ${componentUnderCursorName}`);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	renderGridSnapPoints()
+	{
+		// Grab workspace extents for current view
+		var bottomLeftView = { x: 0, y: 0 }, topRightView = { x: this.canvas.width, y: this.canvas.height };
+		var bottomLeftWorkspace = this.viewPositionToWorkspacePosition(bottomLeftView);
+		var topRightWorkspace = this.viewPositionToWorkspacePosition(topRightView);
+
+		// Setup constants
+		var zoom = this.view.zoom;
+		var snapPointSpacing = this.config.gridSnapSpacing;
+		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0);
+		var snapPointBorderThickness = 1.0, tau = (2 * Math.PI);
+
+		// Calculate workspace co-ordinates for first (bottom left) snap point
+		var firstSnapPointX = bottomLeftWorkspace.x - (bottomLeftWorkspace.x % snapPointSpacing);
+		var firstSnapPointY = bottomLeftWorkspace.y - (bottomLeftWorkspace.y % snapPointSpacing);
+
+		// Calculate required snap point repeats
+		var snapPointRepeatsX = Math.floor((topRightWorkspace.x - firstSnapPointX) / snapPointSpacing);
+		var snapPointRepeatsY = Math.floor((topRightWorkspace.y - firstSnapPointY) / snapPointSpacing);
+
+		// Setup render state
+		var ctx = this.ctx;
 		ctx.fillStyle = "#e9e9e9";
 		ctx.strokeStyle = "#808080";
-		ctx.lineWidth = border;
+		ctx.lineWidth = snapPointBorderThickness;
 
+		// Render visible snap points
 		for(var i = 0; i <= snapPointRepeatsX; ++i)
 		{
 			for(var j = 0; j <= snapPointRepeatsY; ++j)
@@ -279,10 +324,6 @@ class CircuitCanvasWorkspaceRenderer
 				ctx.stroke();
 			}
 		}
-
-		// Debug
-		var componentUnderCursorName = (this.componentUnderCursor != null)? this.componentUnderCursor.descriptor.name : "none";
-		console.log(`Component under cursor: ${componentUnderCursorName}`);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
