@@ -1,3 +1,4 @@
+☐ Rename overlap tests in circuit_utils and pass in proper bounding rect structs
 ☐ Add some kind of visual indicator for hovered components (enlarge slightly for now?)
 ☐ Add "toggle render stats" to toolbar and have renderer draw the following:
 	☐ Total components Vs drawn components (to test culling)

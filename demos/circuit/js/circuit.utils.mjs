@@ -42,23 +42,23 @@ function validateObject(object, requiredFields, requiredFunctions)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Maths
-function pointInsideAABB(point, aabb)
+function pointInsideAABB(point, aabbBottomLeft, aabbSize)
 {
-	if(point.x < aabb.lowerBound.x) { return false; }
-	if(point.y < aabb.lowerBound.y) { return false; }
-	if(point.x > aabb.upperBound.x) { return false; }
-	if(point.y > aabb.upperBound.y) { return false; }
+	if(point.x < aabbBottomLeft.x) { return false; }
+	if(point.y < aabbBottomLeft.y) { return false; }
+	if(point.x > (aabbBottomLeft.x + aabbSize.x)) { return false; }
+	if(point.y > (aabbBottomLeft.y + aabbSize.y)) { return false; }
 	return true;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function overlapAABB(aabb1, aabb2)
+function overlapAABB(aabbBottomLeft1, aabbSize1, aabbBottomLeft2, aabbSize2)
 {
-	if(aabb1.upperBound.x < aabb2.lowerBound.x) { return false; }
-	if(aabb1.lowerBound.x > aabb2.upperBound.x) { return false; }
-	if(aabb1.upperBound.y < aabb2.lowerBound.y) { return false; }
-	if(aabb1.lowerBound.y > aabb2.upperBound.y) { return false; }
+	if((aabbBottomLeft1.x + aabbSize1.x) < aabbBottomLeft2.x) { return false; }
+	if(aabbBottomLeft1.x > (aabbBottomLeft2.x + aabbSize2.x)) { return false; }
+	if((aabbBottomLeft1.y + aabbSize1.y) < aabbBottomLeft2.y) { return false; }
+	if(aabbBottomLeft1.y > (aabbBottomLeft2.y + aabbSize2.y)) { return false; }
 	return true;
 }
 
