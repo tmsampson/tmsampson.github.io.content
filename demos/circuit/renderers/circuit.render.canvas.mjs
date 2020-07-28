@@ -255,41 +255,34 @@ class CircuitCanvasWorkspaceRenderer
 		}
 
 		// Draw grid snap points
-		var snapSpacing = this.config.gridSnapSpacing;
-		var workspaceBottomLeft = this.viewPositionToWorkspacePosition(viewBottomLeft);
-		var workspaceTopRight = this.viewPositionToWorkspacePosition(viewSize);
-		var snapOriginWorkspace = { x: workspaceBottomLeft.x - (workspaceBottomLeft.x % snapSpacing), y: workspaceBottomLeft.y - (workspaceBottomLeft.y % snapSpacing) };
-		var snapRepeatX = Math.floor((workspaceTopRight.x - snapOriginWorkspace.x) / snapSpacing);
-		var snapRepeatY = Math.floor((workspaceTopRight.y - snapOriginWorkspace.y) / snapSpacing);
-		for(var i = 0; i <= snapRepeatX; ++i)
-		{	
-			for(var j = 0; j <= snapRepeatY; ++j)
+		var snapPointSpacing = this.config.gridSnapSpacing, tau = (2 * Math.PI);
+		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0), border = 1.0;
+		var workspaceBottomLeft = this.viewPositionToWorkspacePosition(viewBottomLeft), workspaceTopRight = this.viewPositionToWorkspacePosition(viewSize);
+		var firstSnapPointX = workspaceBottomLeft.x - (workspaceBottomLeft.x % snapPointSpacing);
+		var firstSnapPointY = workspaceBottomLeft.y - (workspaceBottomLeft.y % snapPointSpacing);
+		var snapPointRepeatsX = Math.floor((workspaceTopRight.x - firstSnapPointX) / snapPointSpacing);
+		var snapPointRepeatsY = Math.floor((workspaceTopRight.y - firstSnapPointY) / snapPointSpacing);
+
+		ctx.fillStyle = "#e9e9e9";
+		ctx.strokeStyle = "#808080";
+		ctx.lineWidth = border;
+
+		for(var i = 0; i <= snapPointRepeatsX; ++i)
+		{
+			for(var j = 0; j <= snapPointRepeatsY; ++j)
 			{
-				var snapPosWorkspace = { x: snapOriginWorkspace.x + (i * snapSpacing), y: snapOriginWorkspace.y + (j * snapSpacing) };
-				this.renderGridSnapPoint(snapPosWorkspace);
+				var snapPointPosition = { x: firstSnapPointX + (i * snapPointSpacing), y: firstSnapPointY + (j * snapPointSpacing) };
+				var snapPointPositionView = this.workspacePositionToViewPosition(snapPointPosition);
+				ctx.beginPath();
+				ctx.arc(snapPointPositionView.x, snapPointPositionView.y, snapPointRadius, 0, tau, false);
+				ctx.fill();
+				ctx.stroke();
 			}
 		}
 
 		// Debug
 		var componentUnderCursorName = (this.componentUnderCursor != null)? this.componentUnderCursor.descriptor.name : "none";
 		console.log(`Component under cursor: ${componentUnderCursorName}`);
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	renderGridSnapPoint(workspacePosition)
-	{
-		var ctx = this.ctx, zoom = this.view.zoom;
-		var viewPosition = this.workspacePositionToViewPosition(workspacePosition);
-		var radius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0), border = 1.0;
-		var tau = (2 * Math.PI);
-		ctx.beginPath();
-		ctx.arc(viewPosition.x, viewPosition.y, radius, 0, tau, false);
-		ctx.fillStyle = "#e9e9e9";
-		ctx.fill();
-		ctx.lineWidth = border;
-		ctx.strokeStyle = "#808080";
-		ctx.stroke();
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -394,7 +387,7 @@ class CircuitCanvasWorkspaceRenderer
 		var focus = this.view.focus, zoom = this.view.zoom;
 		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 		var workspacePostion = { x: viewPosition.x - canvasCentre.x, y: viewPosition.y - canvasCentre.y };
-		workspacePostion.x /= zoom; workspacePostion.y /= zoom;     // Remove zoom
+		workspacePostion.x /= zoom; workspacePostion.y /= zoom;       // Remove zoom
 		workspacePostion.x -= focus.x; workspacePostion.y -= focus.y; // Remove pan
 		return { x: workspacePostion.x, y: workspacePostion.y };
 	}
@@ -407,7 +400,7 @@ class CircuitCanvasWorkspaceRenderer
 		var canvasCentre = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 		var viewPosition = { x: workspacePosition.x, y: workspacePosition.y }
 		viewPosition.x += focus.x; viewPosition.y += focus.y; // Apply pan
-		viewPosition.x *= zoom; viewPosition.y *= zoom;     // Apply zoom
+		viewPosition.x *= zoom; viewPosition.y *= zoom;       // Apply zoom
 		return { x: viewPosition.x + canvasCentre.x, y: viewPosition.y + canvasCentre.y };
 	}
 
