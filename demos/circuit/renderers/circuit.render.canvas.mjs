@@ -297,18 +297,19 @@ class CircuitCanvasWorkspaceRenderer
 		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0);
 		var snapPointBorderThickness = 1.0, tau = (2 * Math.PI);
 
-		// Calculate workspace co-ordinates for first (bottom left) snap point
+		// Calculate view co-ordinates for first (bottom left) snap point
 		var firstSnapPointX = bottomLeftWorkspace.x - (bottomLeftWorkspace.x % snapPointSpacing);
 		var firstSnapPointY = bottomLeftWorkspace.y - (bottomLeftWorkspace.y % snapPointSpacing);
+		var firstSnapPointView = this.workspacePositionToViewPosition({ x: firstSnapPointX, y: firstSnapPointY });
 
 		// Calculate required snap point repeats
-		var snapPointRepeatsX = Math.floor((topRightWorkspace.x - firstSnapPointX) / snapPointSpacing);
-		var snapPointRepeatsY = Math.floor((topRightWorkspace.y - firstSnapPointY) / snapPointSpacing);
+		var snapPointSpacingView = this.config.gridSnapSpacing * zoom;
+		var snapPointRepeatsX = Math.floor((topRightView.x - firstSnapPointView.x) / snapPointSpacingView);
+		var snapPointRepeatsY = Math.floor((topRightView.y - firstSnapPointView.y) / snapPointSpacingView);
 
 		// Setup render state
 		var ctx = this.ctx;
-		ctx.fillStyle = "#e9e9e9";
-		ctx.strokeStyle = "#808080";
+		ctx.fillStyle = "#e9e9e9"; ctx.strokeStyle = "#808080";
 		ctx.lineWidth = snapPointBorderThickness;
 
 		// Render visible snap points
@@ -316,8 +317,7 @@ class CircuitCanvasWorkspaceRenderer
 		{
 			for(var j = 0; j <= snapPointRepeatsY; ++j)
 			{
-				var snapPointPosition = { x: firstSnapPointX + (i * snapPointSpacing), y: firstSnapPointY + (j * snapPointSpacing) };
-				var snapPointPositionView = this.workspacePositionToViewPosition(snapPointPosition);
+				var snapPointPositionView = { x: firstSnapPointView.x + (i * snapPointSpacingView), y: firstSnapPointView.y + (j * snapPointSpacingView) };
 				ctx.beginPath();
 				ctx.arc(snapPointPositionView.x, snapPointPositionView.y, snapPointRadius, 0, tau, false);
 				ctx.fill();
