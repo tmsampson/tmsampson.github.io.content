@@ -272,10 +272,12 @@ class CircuitCanvasWorkspaceRenderer
 				}
 			}
 
-			// Draw widget image
-			var widgetImage = imageDescriptor.loadedImage;
+			// Calculate widget size
 			var widgetWidthView = (widgetViewAABB.upperBound.x - widgetViewAABB.lowerBound.x);
 			var widgetHeightView = (widgetViewAABB.upperBound.y - widgetViewAABB.lowerBound.y);
+
+			// Draw widget image
+			var widgetImage = imageDescriptor.loadedImage;
 			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
 		}
 
@@ -285,8 +287,12 @@ class CircuitCanvasWorkspaceRenderer
 			this.renderGridSnapPoints();
 		}
 
+		// Change cursor?
+		var isComponentUnderCursor = (this.componentUnderCursor != null);
+		this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
+
 		// Debug
-		var componentUnderCursorName = (this.componentUnderCursor != null)? this.componentUnderCursor.descriptor.name : "none";
+		var componentUnderCursorName = isComponentUnderCursor? this.componentUnderCursor.descriptor.name : "none";
 		console.log(`Component under cursor: ${componentUnderCursorName}`);
 	}
 
