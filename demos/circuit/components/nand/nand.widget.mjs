@@ -24,7 +24,7 @@ class NandWidget
 {
 	getRenderImage(component)
 	{
-		return { image: "nand", width: 100, height: 50 };
+		return { image: "nand", width: 54, height: 40 };
 	}
 }
 
