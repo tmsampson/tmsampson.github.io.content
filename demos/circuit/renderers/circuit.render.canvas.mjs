@@ -206,8 +206,8 @@ class CircuitCanvasWorkspaceRenderer
 	{
 		// Clear canvas
 		var ctx = this.ctx;
-		var viewBottomLeft = { x: 0, y: 0 }, viewSize = { x: this.canvas.width, y: this.canvas.height };
-		ctx.clearRect(viewBottomLeft.x, viewBottomLeft.y, viewSize.x, viewSize.y);
+		var viewAABB = { lowerBound: { x: 0, y: 0 }, upperBound: { x: this.canvas.width, y: this.canvas.height } };
+		ctx.clearRect(viewAABB.lowerBound.x, viewAABB.lowerBound.y, viewAABB.upperBound.x, viewAABB.upperBound.y);
 
 		// Clear state
 		this.componentUnderCursor = null;
@@ -238,37 +238,45 @@ class CircuitCanvasWorkspaceRenderer
 			// Get image descriptor
 			var widgetName = widget.descriptor.name;
 			var imageDescriptor = widget.descriptor.images[renderImage.image];
-			if(imageDescriptor == null)
+			if(imageDescriptor == null || imageDescriptor.loadedImage == null)
 			{
 				var suggestion = "Please make sure this image is included in the widget descriptor";
 				console.error(`Widget '${widgetName}': Image '${widgetImageName}' provided via getImage() was not loaded. ${suggestion}`);
 				continue;
 			}
 
-			// Calculate view position / size
-			var widgetImage = imageDescriptor.loadedImage;
+			// Calculate widget view AABB
 			var widgetSize = { x: renderImage.width, y: renderImage.height };
 			var widgetWorkspacePositionBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
 			var widgetViewPositionBottomLeft = this.workspacePositionToViewPosition(widgetWorkspacePositionBottomLeft);
 			var widgetViewSize = { x: widgetSize.x * zoom, y: widgetSize.y * zoom };
+			var widgetViewAABB =
+			{
+				lowerBound: widgetViewPositionBottomLeft,
+				upperBound: { x: widgetViewPositionBottomLeft.x + widgetViewSize.x, y: widgetViewPositionBottomLeft.y + widgetViewSize.y }
+			};
 
 			// Skip components outside of view
-			if(!circuit_utils.overlapAABB(viewBottomLeft, viewSize, widgetViewPositionBottomLeft, widgetViewSize))
+			if(!circuit_utils.overlapAABB(widgetViewAABB ,viewAABB))
 			{
+				console.log("Culling....");
 				continue;
 			}
 
 			// Check if under cursor
 			if(this.componentUnderCursor == null)
 			{
-				if(circuit_utils.pointInsideAABB(this.cursorPositionView, widgetViewPositionBottomLeft, widgetViewSize))
+				if(circuit_utils.pointInsideAABB(this.cursorPositionView, widgetViewAABB))
 				{
 					this.componentUnderCursor = component;
 				}
 			}
 
 			// Draw widget image
-			ctx.drawImage(widgetImage, widgetViewPositionBottomLeft.x, widgetViewPositionBottomLeft.y, widgetViewSize.x, widgetViewSize.y);
+			var widgetImage = imageDescriptor.loadedImage;
+			var widgetWidthView = (widgetViewAABB.upperBound.x - widgetViewAABB.lowerBound.x);
+			var widgetHeightView = (widgetViewAABB.upperBound.y - widgetViewAABB.lowerBound.y);
+			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
 		}
 
 		// Render grid snap points?
