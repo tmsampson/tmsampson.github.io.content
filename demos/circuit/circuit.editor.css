@@ -83,7 +83,7 @@ body
 
 .editor_component_picker_item .description
 {
-	margin-top: 4px;
+	margin-top: 2px;
 	margin-left: 8px;
 	font-size: 12px;
 }
@@ -110,6 +110,11 @@ body
 /* ------------------------------------------------------------------------------------------------------------*/
 /* Misc                                                                                                        */
 /* ------------------------------------------------------------------------------------------------------------*/
+.noclose .ui-dialog-titlebar-close
+{
+	display: none;
+}
+
 .noselect
 {
 	-webkit-touch-callout: none; /* iOS Safari */

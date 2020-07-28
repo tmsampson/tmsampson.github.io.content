@@ -92,7 +92,7 @@ function initComponentPicker()
 	// Setup component picker dialog
 	var componentPickerWidth = 300, componentPickerPadding = 30;
 	componentPicker = $("#editor_component_picker");
-	componentPicker.dialog({ width: componentPickerWidth, closeOnEscape: false });
+	componentPicker.dialog({ width: componentPickerWidth, closeOnEscape: false, dialogClass: "noclose" });
 
 	// Bind events
 	componentPicker.mouseup((e) => { e.preventDefault(); });
@@ -255,7 +255,7 @@ function initToolbar()
 	toolbar = $("#editor_toolbar");
 	var toolbarWidth = 600, toolbarPadding = 30;
 	var windowWidth = $(window).width();
-	toolbar.dialog({ width: toolbarWidth, height:50, closeOnEscape: false });
+	toolbar.dialog({ width: toolbarWidth, height:50, closeOnEscape: false, dialogClass: "noclose" });
 	$("div[aria-describedby='editor_toolbar']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
 }
 
