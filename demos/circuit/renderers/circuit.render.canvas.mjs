@@ -20,15 +20,6 @@ circuit_render.registerRenderer({
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Enums
-const SnapPointViewMode =
-{
-	HIDE: "hide",
-	SHOW: "show",
-	SHOW_WHILST_DRAGGING: "whilstDragging"
-};
-
-// -------------------------------------------------------------------------------------------------------------------------
 // Dependencies
 async function loadDependencies()
 {
@@ -74,9 +65,9 @@ class CircuitCanvasRenderer
 			minZoom: 0.2,
 			maxZoom: 25.0,
 			zoomSpeed: 0.15,
+			gridVisible: true,
 			gridSnapSpacing: 100,
-			gridSnapRadius: 20,
-			snapPointViewMode: SnapPointViewMode.SHOW
+			gridSnapRadius: 20
 		};
 
 		// Create canvas
@@ -132,7 +123,7 @@ class CircuitCanvasRenderer
 		this.componentUnderCursor = null;
 
 		// Render grid snap points?
-		if(this.config.snapPointViewMode == SnapPointViewMode.SHOW)
+		if(this.config.gridVisible)
 		{
 			this.renderGridSnapPoints();
 		}
@@ -385,10 +376,19 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	setGridVisible(visible)
+	{
+		this.config.gridVisible = visible;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	setGridSnapSpacing(spacing)
 	{
 		this.config.gridSnapSpacing = spacing;
 	}
+
+	setGridSnap
 
 	// ---------------------------------------------------------------------------------------------------------------------
 }

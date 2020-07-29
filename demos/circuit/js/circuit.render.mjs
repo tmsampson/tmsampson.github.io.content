@@ -100,7 +100,7 @@ function validateRendererDescriptor(rendererDescriptor)
 function validateRendererInstance(renderer)
 {
 	var requiredFields = [ ];
-	var requiredFunctions = [ "onUpdate", "onRender", "getGridSnapSpacing", "setGridSnapSpacing" ];
+	var requiredFunctions = [ "onUpdate", "onRender", "setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing" ];
 	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
 }
 

@@ -41,6 +41,7 @@ var workspaceRenderer = null;
 var canvasContainer = null;
 var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
+var isDragging = false;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
@@ -67,7 +68,7 @@ async function init()
 	initComponentPicker();
 
 	// Setup toolbar
-	initToolbar();
+	initSettingsPanel();
 
 	// Grab canvas container
 	canvasContainer = $("#editor_canvas_container");
@@ -206,11 +207,18 @@ function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 	var componentName = componentPickerItem.data().componentDescriptor.name;
 	console.log(`Started dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = componentPickerItem;
+	isDragging = true;
 
 	// Show and move icon
 	draggingComponentPickerItemIcon.css('background-image', `url('${componentPickerItem.data().icon}')`);
 	draggingComponentPickerItemIcon.show();
 	updateDraggingComponentPickerItemIconPosition(x, y);
+
+	// Toggle grid visibility?
+	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	{
+		workspaceRenderer.setGridVisible(true);
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -220,6 +228,13 @@ function onCancelDraggingComponentPickerItem()
 	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
 	console.log(`Cancel dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
+	isDragging = false;
+
+	// Toggle grid visibility?
+	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	{
+		workspaceRenderer.setGridVisible(false);
+	}
 
 	// Hide icon
 	draggingComponentPickerItemIcon.hide();
@@ -233,6 +248,13 @@ function onFinishDraggingComponentPickerItem(x, y)
 	var componentName = componentDescriptor.name;
 	console.log(`Finish dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
+	isDragging = false;
+
+	// Toggle grid visibility?
+	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	{
+		workspaceRenderer.setGridVisible(false);
+	}
 
 	// Hide icon
 	draggingComponentPickerItemIcon.hide("puff", { percent: 150 }, 300);
@@ -265,10 +287,18 @@ function updateDraggingComponentPickerItemIconPosition(x, y)
 
 function cursorPositionToViewPosition(x, y)
 {
-	var cursorPositionWorkspace = workspaceRenderer.viewPositionToWorkspacePosition({ x: x, y: y });
-	var cursorPositionWorkspaceSnapped = snapPositionToGrid(cursorPositionWorkspace);
-	var cursorPositionViewSnapped = workspaceRenderer.workspacePositionToViewPosition(cursorPositionWorkspaceSnapped);
-	return cursorPositionViewSnapped;
+	var cursorPostionView = { x: x, y: y };
+	if(getSettingValue("editor_settings_gridsnap") == "enabled")
+	{	
+		var cursorPositionWorkspace = workspaceRenderer.viewPositionToWorkspacePosition(cursorPostionView);
+		var cursorPositionWorkspaceSnapped = snapPositionToGrid(cursorPositionWorkspace);
+		var cursorPositionViewSnapped = workspaceRenderer.workspacePositionToViewPosition(cursorPositionWorkspaceSnapped);
+		return cursorPositionViewSnapped;
+	}
+	else
+	{
+		return cursorPostionView;
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -301,15 +331,48 @@ function snapPositionToGrid(workspacePosition)
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Toolbar
-function initToolbar()
+// Settings panel
+function initSettingsPanel()
 {
 	toolbar = $("#editor_settings");
 	var toolbarWidth = 480, toolbarHeight = 234, toolbarPadding = 30;
 	var windowWidth = $(window).width();
 	toolbar.dialog({ width: toolbarWidth, height:toolbarHeight, closeOnEscape: false, dialogClass: "noclose" });
+
+	// Position at top right
 	$("div[aria-describedby='editor_settings']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
+
+	// Setup radio elements
 	$("#editor_settings input").checkboxradio({ icon: false });
+
+	// Bind setting change events
+	$('#editor_settings input[name=editor_settings_grid]').change(function() { onSettingChanged("editor_settings_grid", this.value) });
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onSettingChanged(settingName, newValue)
+{
+	switch(settingName)
+	{
+		case "editor_settings_grid":
+		{
+			switch(newValue)
+			{
+				case "always_show": { workspaceRenderer.setGridVisible(true); break; }
+				case "show_whilst_dragging": { workspaceRenderer.setGridVisible(isDragging); }
+				case "hide": { workspaceRenderer.setGridVisible(false); }
+			}
+			break;
+		}
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function getSettingValue(settingName)
+{
+	return $(`#editor_settings input[name=${settingName}]:checked`).val();
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
