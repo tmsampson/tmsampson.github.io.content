@@ -41,6 +41,8 @@ var workspaceRenderer = null;
 var canvasContainer = null;
 var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
+var draggingComponent = null;
+var draggingComponentOriginalPosition = { };
 var isDragging = false;
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -101,6 +103,7 @@ async function init()
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
 	$("#editor_canvas_container canvas").on("mouseup", (e) => onCanvasMouseUp(e));
+	$("#editor_canvas_container canvas").on("mousedown", (e) => onCanvasMouseDown(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
 	return true;
 }
@@ -194,9 +197,16 @@ function initComponentPicker()
 
 function onMouseMove(e)
 {
+	// Update dragged component picker item?
 	if(draggingComponentPickerItem != null)
 	{
 		updateDraggingComponentPickerItemIconPosition(e.pageX, e.pageY);
+	}
+
+	// Update dragged component
+	if(draggingComponent != null)
+	{
+		updateDraggingComponent(e.pageX, e.pageY);
 	}
 }
 
@@ -205,7 +215,6 @@ function onMouseMove(e)
 function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 {
 	var componentName = componentPickerItem.data().componentDescriptor.name;
-	console.log(`Started dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = componentPickerItem;
 	isDragging = true;
 
@@ -226,7 +235,6 @@ function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 function onCancelDraggingComponentPickerItem()
 {
 	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
-	console.log(`Cancel dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
 	isDragging = false;
 
@@ -246,7 +254,6 @@ function onFinishDraggingComponentPickerItem(x, y)
 {
 	var componentDescriptor = draggingComponentPickerItem.data().componentDescriptor;
 	var componentName = componentDescriptor.name;
-	console.log(`Finish dragging component picker item: '${componentName}'`);
 	draggingComponentPickerItem = null;
 	isDragging = false;
 
@@ -285,6 +292,51 @@ function updateDraggingComponentPickerItemIconPosition(x, y)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
+function onStartDraggingComponent(component, x, y)
+{
+	// Store dragged component
+	draggingComponentOriginalPosition = workspace.getComponentPosition(component);
+	draggingComponent = component;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function updateDraggingComponent(x, y)
+{
+	// Move dragged component
+	var cursorPostionWorkspace = cursorPositionToWorkspacePosition(x, y);
+	workspace.setComponentPosition(draggingComponent, cursorPostionWorkspace);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCancelDraggingComponent(x, y)
+{
+	// Put component back where it was before we started moving it
+	workspace.setComponentPosition(draggingComponent, draggingComponentOriginalPosition);
+
+	// Clear dragged component
+	draggingComponent = null;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onFinishDraggingComponent(x, y)
+{
+	// Clear dragged component
+	draggingComponent = null;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function cursorPositionToWorkspacePosition(x, y)
+{
+	var cursorPostionView = cursorPositionToViewPosition(x, y);
+	return workspaceRenderer.viewPositionToWorkspacePosition(cursorPostionView);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
 function cursorPositionToViewPosition(x, y)
 {
 	var cursorPostionView = { x: x, y: y };
@@ -305,9 +357,16 @@ function cursorPositionToViewPosition(x, y)
 
 function onWindowMouseUp()
 {
+	// Cancel dragged component picker item
 	if(draggingComponentPickerItem != null)
 	{
 		onCancelDraggingComponentPickerItem();
+	}
+
+	// Cancel dragged component
+	if(draggingComponent != null)
+	{
+		onCancelDraggingComponent();
 	}
 }
 
@@ -315,9 +374,27 @@ function onWindowMouseUp()
 
 function onCanvasMouseUp(e)
 {
+	// Finish dragging component picker item?
 	if(draggingComponentPickerItem != null)
 	{
 		onFinishDraggingComponentPickerItem(e.pageX, e.pageY);
+	}
+
+	// Finish dragging component?
+	if(draggingComponent != null)
+	{
+		onFinishDraggingComponent(e.pageX, e.pageY);
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCanvasMouseDown(e)
+{
+	var componentUnderCursor = workspaceRenderer.getComponentUnderCursor();
+	if(componentUnderCursor != null)
+	{
+		onStartDraggingComponent(componentUnderCursor, e.pageX, e.pageY);
 	}
 }
 

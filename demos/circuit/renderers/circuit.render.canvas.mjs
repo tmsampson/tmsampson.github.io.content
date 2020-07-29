@@ -369,6 +369,13 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	getComponentUnderCursor()
+	{
+		return this.componentUnderCursor;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	getGridSnapSpacing()
 	{
 		return this.config.gridSnapSpacing;

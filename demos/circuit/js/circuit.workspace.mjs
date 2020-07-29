@@ -41,6 +41,9 @@ class CircuitWorkspace
 		console.log(`Workspace '${this.name}': Adding component '${componentDescriptor.name}'`);
 		this.components.push(componentInstance);
 
+		// Store workspace on component
+		componentInstance.workspace = this;
+
 		// Component successfully added
 		return componentInstance;
 	}
@@ -59,6 +62,29 @@ class CircuitWorkspace
 
 		// Add component using descriptor
 		return this.addComponent(componentDescriptor);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getComponentPosition(componentInstance)
+	{
+		return componentInstance.args.position;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	setComponentPosition(componentInstance, newPosition)
+	{
+		// Check to ensure that the component belongs to this workspace
+		if(componentInstance.workspace != this)
+		{
+			console.log(`Workspace '${this.name}': Cannot modify component '${componentName}' as it does not belong to this workspace`);
+			return false;
+		}
+
+		// Move component
+		componentInstance.args.position = newPosition;
+		return true;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
