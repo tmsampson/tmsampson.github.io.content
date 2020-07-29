@@ -91,7 +91,7 @@ body
 /* ------------------------------------------------------------------------------------------------------------*/
 /* Settings Panel                                                                                              */
 /* ------------------------------------------------------------------------------------------------------------*/
-#editor_toolbar > h2
+#editor_settings > h2
 {
 	font-size: 16px;
 	font-weight: bold;
@@ -100,18 +100,19 @@ body
 	border-bottom: 1px solid grey;
 }
 
-#editor_toolbar .ui-checkboxradio-label
+#editor_settings .ui-checkboxradio-label
 {
 	background-color: white;
 	color: #333333;
+	font-size:0.9em;
 }
 
-#editor_toolbar .ui-checkboxradio-label:hover
+#editor_settings .ui-checkboxradio-label:hover
 {
 	background-color:rgb(255, 245, 245);
 }
 
-#editor_toolbar .ui-checkboxradio-checked
+#editor_settings .ui-checkboxradio-checked
 {
 	background-color:rgb(255, 245, 245);
 	border-color: #7f0036;
@@ -119,14 +120,14 @@ body
 	color: #333333;
 }
 
-#editor_toolbar .ui-button:active
+#editor_settings .ui-button:active
 {
 	background-color:rgb(255, 245, 245);
 	border-color: #7f0036;
 	color: #333333;
 }
 
-#editor_toolbar .ui-visual-focus
+#editor_settings .ui-visual-focus
 {
 	box-shadow:1px 1px 1px #7f0036;
 }

@@ -304,12 +304,12 @@ function snapPositionToGrid(workspacePosition)
 // Toolbar
 function initToolbar()
 {
-	toolbar = $("#editor_toolbar");
-	var toolbarWidth = 480, toolbarHeight = 232, toolbarPadding = 30;
+	toolbar = $("#editor_settings");
+	var toolbarWidth = 480, toolbarHeight = 234, toolbarPadding = 30;
 	var windowWidth = $(window).width();
 	toolbar.dialog({ width: toolbarWidth, height:toolbarHeight, closeOnEscape: false, dialogClass: "noclose" });
-	$("div[aria-describedby='editor_toolbar']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
-	$("#editor_toolbar input").checkboxradio({ icon: false });
+	$("div[aria-describedby='editor_settings']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
+	$("#editor_settings input").checkboxradio({ icon: false });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
