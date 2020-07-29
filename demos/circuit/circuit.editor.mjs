@@ -29,7 +29,7 @@ var config =
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Components
-var componentPicker = null, toolbar = null;
+var componentPicker = null, settingsPanel = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
@@ -215,7 +215,7 @@ function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 	updateDraggingComponentPickerItemIconPosition(x, y);
 
 	// Toggle grid visibility?
-	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
 	{
 		workspaceRenderer.setGridVisible(true);
 	}
@@ -231,7 +231,7 @@ function onCancelDraggingComponentPickerItem()
 	isDragging = false;
 
 	// Toggle grid visibility?
-	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
 	{
 		workspaceRenderer.setGridVisible(false);
 	}
@@ -251,7 +251,7 @@ function onFinishDraggingComponentPickerItem(x, y)
 	isDragging = false;
 
 	// Toggle grid visibility?
-	if(getSettingValue("editor_settings_grid") == "show_whilst_dragging")
+	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
 	{
 		workspaceRenderer.setGridVisible(false);
 	}
@@ -288,7 +288,7 @@ function updateDraggingComponentPickerItemIconPosition(x, y)
 function cursorPositionToViewPosition(x, y)
 {
 	var cursorPostionView = { x: x, y: y };
-	if(getSettingValue("editor_settings_gridsnap") == "enabled")
+	if(getEditorSettingValue(EditorSettings.GRID_SNAP) == EditorSettings.GRID_SNAP_ENABLED)
 	{	
 		var cursorPositionWorkspace = workspaceRenderer.viewPositionToWorkspacePosition(cursorPostionView);
 		var cursorPositionWorkspaceSnapped = snapPositionToGrid(cursorPositionWorkspace);
@@ -334,19 +334,26 @@ function snapPositionToGrid(workspacePosition)
 // Settings panel
 function initSettingsPanel()
 {
-	toolbar = $("#editor_settings");
-	var toolbarWidth = 480, toolbarHeight = 234, toolbarPadding = 30;
+	settingsPanel = $("#editor_settings");
+	var settingsPanelWidth = 480, settingsPanelHeight = 234, settingsPanelPadding = 30;
 	var windowWidth = $(window).width();
-	toolbar.dialog({ width: toolbarWidth, height:toolbarHeight, closeOnEscape: false, dialogClass: "noclose" });
+	settingsPanel.dialog({ width: settingsPanelWidth, height:settingsPanelHeight, closeOnEscape: false, dialogClass: "noclose" });
 
 	// Position at top right
-	$("div[aria-describedby='editor_settings']").offset({ top: toolbarPadding, left: windowWidth - toolbarWidth - toolbarPadding });
+	$("div[aria-describedby='editor_settings']").offset({ top: settingsPanelPadding, left: windowWidth - settingsPanelWidth - settingsPanelPadding });
 
 	// Setup radio elements
 	$("#editor_settings input").checkboxradio({ icon: false });
 
 	// Bind setting change events
-	$('#editor_settings input[name=editor_settings_grid]').change(function() { onSettingChanged("editor_settings_grid", this.value) });
+	bindSettingChangedEvent(EditorSettings.GRID_MODE);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function bindSettingChangedEvent(settingName)
+{
+	$(`#editor_settings input[name=${settingName}]`).change(function() { onSettingChanged(settingName, this.value) });
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -355,13 +362,13 @@ function onSettingChanged(settingName, newValue)
 {
 	switch(settingName)
 	{
-		case "editor_settings_grid":
+		case EditorSettings.GRID_MODE:
 		{
 			switch(newValue)
 			{
-				case "always_show": { workspaceRenderer.setGridVisible(true); break; }
-				case "show_whilst_dragging": { workspaceRenderer.setGridVisible(isDragging); }
-				case "hide": { workspaceRenderer.setGridVisible(false); }
+				case EditorSettings.GRID_MODE_SHOW: { workspaceRenderer.setGridVisible(true); break; }
+				case EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING: { workspaceRenderer.setGridVisible(isDragging); }
+				case EditorSettings.GRID_MODE_HIDE: { workspaceRenderer.setGridVisible(false); }
 			}
 			break;
 		}
@@ -370,10 +377,28 @@ function onSettingChanged(settingName, newValue)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function getSettingValue(settingName)
+function getEditorSettingValue(settingName)
 {
 	return $(`#editor_settings input[name=${settingName}]:checked`).val();
 }
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Settings enum
+// -------------------------------------------------------------------------------------------------------------------------
+// NOTE: These should match the values in the html
+const EditorSettings =
+{
+	// Grid mode
+	GRID_MODE: "editor_settings_grid_mode",
+	GRID_MODE_SHOW: "show",
+	GRID_MODE_SHOW_WHILST_DRAGGING: "show_whilst_dragging",
+	GRID_MODE_HIDE: "hide",
+
+	// Grid snap
+	GRID_SNAP: "editor_settings_gridsnap",
+	GRID_SNAP_ENABLED: "enabled",
+	GRID_SNAP_DISABLED: "disabled",
+};
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Dependencies
