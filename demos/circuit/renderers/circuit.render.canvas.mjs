@@ -324,7 +324,7 @@ class CircuitCanvasRenderer
 
 		// Update pan origin
 		this.panOrigin.x = x;
-		this.panOrigin.y = y;;
+		this.panOrigin.y = y;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
