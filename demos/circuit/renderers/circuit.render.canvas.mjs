@@ -15,7 +15,8 @@ circuit_render.registerRenderer({
 	name: "circuit_canvas_renderer",
 	description: "Circuit canvas renderer",
 	version: "1.0.0.0",
-	create: () => new CircuitCanvasRenderer()
+	load: () => loadDependencies(),
+	create: (workspace, containerElement) => new CircuitCanvasRenderer(workspace, containerElement)
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -28,119 +29,40 @@ const SnapPointViewMode =
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Dependencies
+async function loadDependencies()
+{
+	// Load jquery module (if not already loaded)
+	if(!window.jQuery && !await circuit_utils.loadScript(jqueryLib))
+	{
+		console.error("Failed to load jQuery");
+		return false;
+	}
+
+	// Load jquery mousehweel plugin
+	if(!await circuit_utils.loadScript(jqueryMouseWheelPlugin))
+	{
+		console.error("Failed to load jQuery mouse wheel plugin");
+		return false;
+	}
+
+	// Ready
+	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Implementation
 class CircuitCanvasRenderer
 {
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	async load()
+	constructor(workspace, containerElement)
 	{
-		// Load jquery module (if not already loaded)
-		if(!window.jQuery && !await circuit_utils.loadScript(jqueryLib))
-		{
-			console.error("Failed to load jQuery");
-			return false;
-		}
+		// Store workspace
+		this.workspace = workspace;
 
-		// Load jquery mousehweel plugin
-		if(!await circuit_utils.loadScript(jqueryMouseWheelPlugin))
-		{
-			console.error("Failed to load jQuery mouse wheel plugin");
-			return false;
-		}
-
-		// Setup workspace renderer container
-		this.workspaceRenderers = [];
-
-		// Start rendering
-		this.startRendering();
-		return true;
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	startRendering(e)
-	{
-		var workspaceRenderers = this.workspaceRenderers;
-		function onRender()
-		{
-			// For each workspace renderer...
-			for(var i = 0; i < workspaceRenderers.length; ++i)
-			{
-				// Update and render workspace
-				workspaceRenderers[i].onUpdate(e);
-				workspaceRenderers[i].onRender(e);
-			}
-
-			// Request next render callback
-			window.requestAnimationFrame(onRender);
-
-		};
-
-		// Request first render callback
-		window.requestAnimationFrame(onRender);
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	onCreateWorkspace(workspace, renderContainer)
-	{
-		var workspaceRenderer = new CircuitCanvasWorkspaceRenderer(workspace, renderContainer);
-		this.workspaceRenderers.push(workspaceRenderer);
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	viewPositionToWorkspacePosition(workspace, viewPosition)
-	{
-		// For each workspace renderer...
-		for(var i = 0; i < this.workspaceRenderers.length; ++i)
-		{
-			var workspaceRenderer = this.workspaceRenderers[i];
-			if(workspaceRenderer.workspace == workspace)
-			{
-				// Ask workspace renderer to map view position
-				return workspaceRenderer.viewPositionToWorkspacePosition(viewPosition);
-			}
-		}
-
-		// Could not find renderer for this workspace, return unmodified view position
-		return viewPosition;
-	}
-
-	
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	workspacePositionToViewPosition(workspace, viewPosition)
-	{
-		// For each workspace renderer...
-		for(var i = 0; i < this.workspaceRenderers.length; ++i)
-		{
-			var workspaceRenderer = this.workspaceRenderers[i];
-			if(workspaceRenderer.workspace == workspace)
-			{
-				// Ask workspace renderer to map workspace position
-				return workspaceRenderer.workspacePositionToViewPosition(viewPosition);
-			}
-		}
-
-		// Could not find renderer for this workspace, return unmodified view position
-		return viewPosition;
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-class CircuitCanvasWorkspaceRenderer
-{
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	constructor(workspace, renderContainer)
-	{
 		// Init state
-		this.renderContainer = renderContainer;
+		this.containerElement = containerElement;
 		this.isPanning = false;
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
@@ -156,9 +78,6 @@ class CircuitCanvasWorkspaceRenderer
 			gridSnapRadius: 20,
 			snapPointViewMode: SnapPointViewMode.SHOW
 		};
-
-		// Store workspace
-		this.workspace = workspace;
 
 		// Create canvas
 		var canvas = $("<canvas id='circuit_canvas' resize></canvas>");
@@ -177,15 +96,15 @@ class CircuitCanvasWorkspaceRenderer
 		this.updateCanvasSize();
 
 		// Add canvas to page
-		renderContainer.append(this.canvas);
+		containerElement.append(this.canvas);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	updateCanvasSize()
 	{
-		this.canvas.width = this.renderContainer.width();
-		this.canvas.height = this.renderContainer.height();
+		this.canvas.width = this.containerElement.width();
+		this.canvas.height = this.containerElement.height();
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -212,7 +131,13 @@ class CircuitCanvasWorkspaceRenderer
 		// Clear state
 		this.componentUnderCursor = null;
 
-		// Render component
+		// Render grid snap points?
+		if(this.config.snapPointViewMode == SnapPointViewMode.SHOW)
+		{
+			this.renderGridSnapPoints();
+		}
+
+		// Render components
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
 		for(var i = 0; i < components.length; ++i)
@@ -259,7 +184,6 @@ class CircuitCanvasWorkspaceRenderer
 			// Skip components outside of view
 			if(!circuit_utils.overlapAABB(widgetViewAABB ,viewAABB))
 			{
-				console.log("Culling....");
 				continue;
 			}
 
@@ -281,15 +205,12 @@ class CircuitCanvasWorkspaceRenderer
 			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
 		}
 
-		// Render grid snap points?
-		if(this.config.snapPointViewMode == SnapPointViewMode.SHOW)
-		{
-			this.renderGridSnapPoints();
-		}
-
 		// Change cursor?
-		var isComponentUnderCursor = (this.componentUnderCursor != null);
-		this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
+		if(!this.isPanning)
+		{
+			var isComponentUnderCursor = (this.componentUnderCursor != null);
+			this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
+		}
 
 		// Debug
 		var componentUnderCursorName = isComponentUnderCursor? this.componentUnderCursor.descriptor.name : "none";
@@ -457,6 +378,20 @@ class CircuitCanvasWorkspaceRenderer
 		viewPosition.x += focus.x; viewPosition.y += focus.y; // Apply pan
 		viewPosition.x *= zoom; viewPosition.y *= zoom;       // Apply zoom
 		return { x: viewPosition.x + canvasCentre.x, y: viewPosition.y + canvasCentre.y };
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getGridSnapSpacing()
+	{
+		return this.config.gridSnapSpacing;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	setGridSnapSpacing(spacing)
+	{
+		this.config.gridSnapSpacing = spacing;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

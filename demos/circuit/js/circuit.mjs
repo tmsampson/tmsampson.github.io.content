@@ -26,15 +26,15 @@ async function init()
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Workspace
-function createWorkspace(name, renderContainer)
+function createWorkspace(name, containerElement)
 {
 	// Create workspace
 	var workspace = circuit_workspace.create(name);
 
 	// Inform render layer (only if caller provided a render container)
-	if(renderContainer != null)
+	if(containerElement != null)
 	{
-		circuit_render.onCreateWorkspace(workspace, renderContainer);
+		circuit_render.onCreateWorkspace(workspace, containerElement);
 	}
 
 	return workspace;
@@ -140,13 +140,6 @@ function getComponentRegistry()
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Rendering
-function getRenderers()
-{
-	return circuit_render.getRenderers();
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
 // Exports
 export
 {
@@ -156,7 +149,6 @@ export
 	getComponentRegistry,
 	getComponentDescriptor,
 	createComponent,
-	getRenderers
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

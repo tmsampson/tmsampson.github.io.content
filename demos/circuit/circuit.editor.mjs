@@ -1,6 +1,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
 import * as circuit from "./js/circuit.mjs";
+import * as circuit_render from "./js/circuit.render.mjs";
 import * as circuit_utils from "./js/circuit.utils.mjs";
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -16,8 +17,15 @@ const jqueryCss = "third-party/jquery/jquery-ui.min.css";   // jQuery UI (css)
 const editorCss = "circuit.editor.css";                     // Editor css
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Config
+// Misc
 var circuitRoot = "./";
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Config
+var config = 
+{
+	gridSnapSpacing: 100,
+};
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Components
@@ -26,6 +34,7 @@ var componentPicker = null, toolbar = null;
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
 var workspace = null;
+var workspaceRenderer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // UI
@@ -47,7 +56,8 @@ async function init()
 	// Load editor dependencies
 	if(!await loadDependencies())
 	{
-		console.error("Failed to load dependencies");
+		console.error("Editor: Failed to load dependencies");
+		return false;
 	}
 
 	// Init ciruit
@@ -70,11 +80,28 @@ async function init()
 
 	// Create workspace for editor
 	workspace = circuit.createWorkspace("editor", canvasContainer);
+	if(workspace == null)
+	{
+		console.error("Editor: Workspace creation failed");
+		return false;
+	}
+
+	// Grab renderer
+	workspaceRenderer = circuit_render.getRenderer(workspace);
+	if(workspaceRenderer == null)
+	{
+		console.error("Editor: Failed to find renderer for workspace");
+		return false;
+	}
+
+	// Setup renderer defaults
+	workspaceRenderer.setGridSnapSpacing(100);
 
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
 	$("#editor_canvas_container canvas").on("mouseup", (e) => onCanvasMouseUp(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
+	return true;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -208,11 +235,13 @@ function onFinishDraggingComponentPickerItem(x, y)
 	draggingComponentPickerItem = null;
 
 	// Hide icon
-	draggingComponentPickerItemIcon.hide("puff", { percent:150 }, 300);
+	draggingComponentPickerItemIcon.hide("puff", { percent: 150 }, 300);
+
+	// Get cursor view position
+	var cursorPositionView = cursorPositionToViewPosition(x, y);
 
 	// Perform view --> workspace position mapping
-	var viewPosition = { x: x, y: y };
-	var workspacePosition = workspace.viewPositionToWorkspacePosition(viewPosition);
+	var workspacePosition = workspaceRenderer.viewPositionToWorkspacePosition(cursorPositionView);
 
 	// Add component to workspace
 	workspace.addComponent(componentDescriptor, { position: workspacePosition });
@@ -222,10 +251,24 @@ function onFinishDraggingComponentPickerItem(x, y)
 
 function updateDraggingComponentPickerItemIconPosition(x, y)
 {
+	// Get cursor view position
+	var cursorPositionView = cursorPositionToViewPosition(x, y);
+
+	// Move dragged icon
 	var iconWidth = draggingComponentPickerItemIcon.width();
 	var iconHeight = draggingComponentPickerItemIcon.height();
-	draggingComponentPickerItemIcon.css("left", x  - (iconWidth * 0.5));
-	draggingComponentPickerItemIcon.css("top", y - (iconHeight * 0.5));
+	draggingComponentPickerItemIcon.css("left", cursorPositionView.x  - (iconWidth * 0.5));
+	draggingComponentPickerItemIcon.css("top", cursorPositionView.y - (iconHeight * 0.5));
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function cursorPositionToViewPosition(x, y)
+{
+	var cursorPositionWorkspace = workspaceRenderer.viewPositionToWorkspacePosition({ x: x, y: y });
+	var cursorPositionWorkspaceSnapped = snapPositionToGrid(cursorPositionWorkspace);
+	var cursorPositionViewSnapped = workspaceRenderer.workspacePositionToViewPosition(cursorPositionWorkspaceSnapped);
+	return cursorPositionViewSnapped;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -246,6 +289,15 @@ function onCanvasMouseUp(e)
 	{
 		onFinishDraggingComponentPickerItem(e.pageX, e.pageY);
 	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Misc
+function snapPositionToGrid(workspacePosition)
+{
+	var spacing = workspaceRenderer.getGridSnapSpacing();
+	var gridX = Math.round(workspacePosition.x / spacing), gridY = Math.round(workspacePosition.y / spacing);
+	return { x: (gridX * spacing), y: (gridY * spacing) };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

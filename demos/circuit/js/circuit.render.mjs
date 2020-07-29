@@ -11,7 +11,8 @@ var widgetRegistry = { }
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
 var circuitRoot = "./"
-var renderers = [];
+var renderers = { };
+var renderLoopStarted = false;
 
 // -------------------------------------------------------------------------------------------------------------------------
 
@@ -46,7 +47,7 @@ async function init()
 	console.log("Initialising render layer");
 	
 	// Initialise renderers
-	if(!await initRenderers())
+	if(!await loadRenderers())
 	{
 		return false;
 	}
@@ -66,7 +67,7 @@ async function init()
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-async function initRenderers()
+async function loadRenderers()
 {
 	// For each registered renderer....
 	for (var rendererName in rendererRegistry)
@@ -74,54 +75,15 @@ async function initRenderers()
 		// Create renderer
 		console.log(`Renderer '${rendererName}': Initialising`);
 		var rendererDescriptor = rendererRegistry[rendererName];
-		var result = createRenderer(rendererDescriptor);
-
-		// Handle failures
-		var renderer = result.value;
-		if(renderer == null)
-		{
-			console.error(result.message);
-			return false;
-		}
-
+		
 		// Load renderer
-		if(!await renderer.load())
+		if(!await rendererDescriptor.load())
 		{
 			console.error(`Renderer '${rendererName}': Failed to load`);
 			return false;
 		}
-
-		// Store renderer
-		renderers.push(renderer);
 	}
-
 	return true;
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-function createRenderer(rendererDescriptor)
-{
-	// Create renderer
-	var rendererName = rendererDescriptor.name;
-	var rendererInstance = rendererDescriptor.create();
-	if(rendererInstance == null)
-	{
-		return { value: null, message: `Renderer '${rendererName}': Creation failed` };
-	}
-
-	// Store descriptor onto renderer
-	rendererInstance.descriptor = rendererDescriptor;
-
-	// Validate renderer instance
-	var validationResult = validateRendererInstance(rendererInstance);
-	if(!validationResult.value)
-	{
-		return { value: null, message: `Renderer '${rendererName}': Validation failed. ${validationResult.message}` };
-	}
-
-	// Component successfully created
-	return { value: rendererInstance, message: "" };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -129,7 +91,7 @@ function createRenderer(rendererDescriptor)
 function validateRendererDescriptor(rendererDescriptor)
 {
 	var requiredFields = [ "name", "description", "version"];
-	var requiredFunctions = [ "create" ];
+	var requiredFunctions = [ "load", "create" ];
 	return circuit_utils.validateObject(rendererDescriptor, requiredFields, requiredFunctions);
 }
 
@@ -137,16 +99,9 @@ function validateRendererDescriptor(rendererDescriptor)
 
 function validateRendererInstance(renderer)
 {
-	var requiredFields = [];
-	var requiredFunctions = [ "load", "onCreateWorkspace", "viewPositionToWorkspacePosition", "workspacePositionToViewPosition" ];
+	var requiredFields = [ ];
+	var requiredFunctions = [ "onUpdate", "onRender", "getGridSnapSpacing", "setGridSnapSpacing" ];
 	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
-}
-
-// -------------------------------------------------------------------------------------------------------------------------
-
-function getRenderers()
-{
-	return renderers;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -266,14 +221,100 @@ function validateWidgetImageDescriptor(widgetImageDescriptor)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Workspaces
-function onCreateWorkspace(workspace, renderContainer)
+function onCreateWorkspace(workspace, containerElement)
 {
-	// Forward to all renderers
-	for(var i = 0; i < renderers.length; ++i)
+	// Ignore if no workspace or container was provided
+	if(workspace == null || containerElement == null)
 	{
-		var renderer = renderers[i];
-		renderer.onCreateWorkspace(workspace, renderContainer);
+		return;
 	}
+
+	// For each registered renderer....
+	var renderInstanceRegistered = false;
+	for (var rendererName in rendererRegistry)
+	{
+		// Create renderer for this workspace
+		var rendererDescriptor = rendererRegistry[rendererName];
+		var rendererInstance = rendererDescriptor.create(workspace, containerElement);
+		if(rendererInstance == null)
+		{
+			console.error(`Failed to create renderer '${rendererName}' for workspace '${workspace.name}'`);
+			continue;
+		}
+
+		// Validate renderer instance
+		var validationResult = validateRendererInstance(rendererInstance);
+		if(!validationResult.value)
+		{
+			return { value: null, message: `Renderer '${rendererName}': Validation failed. ${validationResult.message}` };
+		}
+
+		// Store renderer instance for this workspace
+		if(workspace in renderers)
+		{
+			renderers[workspace].push(rendererInstance);
+		}
+		else
+		{
+			renderers[workspace] = [ rendererInstance ];
+		}
+		renderInstanceRegistered = true;
+	}
+
+	// Start render loop?
+	if(renderInstanceRegistered && !renderLoopStarted)
+	{
+		// Start render loop
+		renderLoopStarted = true;
+		var renderLoop = (e) =>
+		{
+			onUpdate(e);
+			onRender(e);
+			window.requestAnimationFrame(renderLoop);
+		};
+		window.requestAnimationFrame(renderLoop);
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Render loop
+function onUpdate(e)
+{
+	// Update all renderers
+	for (var workspace in renderers)
+	{
+		var rendererInstances = renderers[workspace];
+		for(var i = 0; i < rendererInstances.length; ++i)
+		{
+			var rendererInstance = rendererInstances[i];
+			rendererInstance.onUpdate(e);
+		}
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onRender(e)
+{
+	// Render all renderers
+	for (var workspace in renderers)
+	{
+		var rendererInstances = renderers[workspace];
+		for(var i = 0; i < rendererInstances.length; ++i)
+		{
+			var rendererInstance = rendererInstances[i];
+			rendererInstance.onRender(e);
+		}
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Access
+function getRenderer(workspace)
+{
+	// For now, return first available renderer for this workspace
+	var haveRenderer = (workspace in renderers);
+	return haveRenderer? renderers[workspace][0] : null;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -281,10 +322,10 @@ function onCreateWorkspace(workspace, renderContainer)
 export
 {
 	registerRenderer,
-	getRenderers,
 	registerComponentWidget,
 	init,
-	onCreateWorkspace
+	onCreateWorkspace,
+	getRenderer
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
