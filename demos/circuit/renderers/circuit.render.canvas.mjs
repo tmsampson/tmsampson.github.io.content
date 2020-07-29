@@ -211,10 +211,6 @@ class CircuitCanvasRenderer
 			var isComponentUnderCursor = (this.componentUnderCursor != null);
 			this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
 		}
-
-		// Debug
-		var componentUnderCursorName = isComponentUnderCursor? this.componentUnderCursor.descriptor.name : "none";
-		console.log(`Component under cursor: ${componentUnderCursorName}`);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

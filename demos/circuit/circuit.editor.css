@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------------------------------------------*/
-/* Layout                                                                                                      */
+/* Global                                                                                                      */
 /* ------------------------------------------------------------------------------------------------------------*/
 body
 {
@@ -86,6 +86,49 @@ body
 	margin-top: 2px;
 	margin-left: 8px;
 	font-size: 12px;
+}
+
+/* ------------------------------------------------------------------------------------------------------------*/
+/* Settings Panel                                                                                              */
+/* ------------------------------------------------------------------------------------------------------------*/
+#editor_toolbar > h2
+{
+	font-size: 16px;
+	font-weight: bold;
+	color: #7f0036;
+	padding-bottom: 3px;
+	border-bottom: 1px solid grey;
+}
+
+#editor_toolbar .ui-checkboxradio-label
+{
+	background-color: white;
+	color: #333333;
+}
+
+#editor_toolbar .ui-checkboxradio-label:hover
+{
+	background-color:rgb(255, 245, 245);
+}
+
+#editor_toolbar .ui-checkboxradio-checked
+{
+	background-color:rgb(255, 245, 245);
+	border-color: #7f0036;
+	box-shadow:1px 1px 1px #7f0036;
+	color: #333333;
+}
+
+#editor_toolbar .ui-button:active
+{
+	background-color:rgb(255, 245, 245);
+	border-color: #7f0036;
+	color: #333333;
+}
+
+#editor_toolbar .ui-visual-focus
+{
+	box-shadow:1px 1px 1px #7f0036;
 }
 
 /* ------------------------------------------------------------------------------------------------------------*/

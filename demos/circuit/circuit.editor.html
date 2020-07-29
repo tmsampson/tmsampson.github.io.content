@@ -15,7 +15,21 @@
 		<script type="module" src="components/power_source/power_source.widget.mjs"></script>
 	</head>
 	<body>
-		<div id="editor_toolbar" class="noselect" title="Toolbar"></div>
+		<div id="editor_toolbar" class="noselect" title="Settings">
+			<h2>Grid Points</h2>
+			<label for="settings_grid_always_show">Always Show</label>
+			<input type="radio" name="settings_grid" id="settings_grid_always_show">
+			<label for="settings_grid_dragging">Show When Dragging</label>
+			<input type="radio" name="settings_grid" id="settings_grid_dragging">
+			<label for="settings_grid_hide">Hide</label>
+			<input type="radio" name="settings_grid" id="settings_grid_hide">
+			<br/>
+			<h2>Grid Snap</h2>
+			<label for="settings_gridsnap_enabled">Enabled</label>
+			<input type="radio" name="settings_gridsnap" id="settings_gridsnap_enabled">
+			<label for="settings_gridsnap_disabled">Disabled</label>
+			<input type="radio" name="settings_gridsnap" id="settings_gridsnap_disabled">
+		</div>
 		<div id="editor_component_picker" class="noselect" title="Components"></div>
 		<div id="editor_canvas_container">
 		</div>
