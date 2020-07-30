@@ -1,7 +1,5 @@
-☐ Add some kind of visual indicator for hovered components (enlarge slightly for now?)
 ☐ Add "toggle render stats" to toolbar and have renderer draw the following:
 	☐ Total components Vs drawn components (to test culling)
 	☐ Component under cursor
-☐ Implement dragging  component around the workspace
-☐ Implement snap to grid (add toggle to toolbar)
-☐ Start renderin input/output pins
+☐ Start rendering input/output pins
+☐ STart rendering connections: https://github.com/pkorac/cardinal-spline-js
