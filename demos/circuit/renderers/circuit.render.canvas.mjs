@@ -20,6 +20,10 @@ circuit_render.registerRenderer({
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Constants
+var tau = (2 * Math.PI);
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Dependencies
 async function loadDependencies()
 {
@@ -130,11 +134,11 @@ class CircuitCanvasRenderer
 
 		// Render components
 		var zoom = this.view.zoom;
-		var components = this.workspace.components;
-		for(var i = 0; i < components.length; ++i)
+		var components = this.workspace.components, inputPinPositions = [], outputPinPositions = [];
+		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
-			var component = components[i];
+			var component = components[componentIndex];
 			var componentPosition = component.args.position;
 			if(!componentPosition)
 			{
@@ -194,6 +198,44 @@ class CircuitCanvasRenderer
 			// Draw widget image
 			var widgetImage = imageDescriptor.loadedImage;
 			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
+
+			// Gather input pins
+			for(var inputPinIndex = 0; inputPinIndex < component.inputs.length; ++inputPinIndex)
+			{
+				var pinPositionLocal = widget.getInputPinPosition(inputPinIndex);
+				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
+				inputPinPositions.push(pinPositionView);
+			}
+
+			// Gather output pins
+			for(var outputPinIndex = 0; outputPinIndex < component.outputs.length; ++outputPinIndex)
+			{
+				var pinPositionLocal = widget.getOutputPinPosition(outputPinIndex);
+				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
+				outputPinPositions.push(pinPositionView);
+			}
+		}
+
+		// Setup pin render state
+		var pinRadius = 3 * zoom, pinLineWidth = 2;
+		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = pinLineWidth;
+
+		// Draw input pins
+		for(var inputPinIndex = 0; inputPinIndex < inputPinPositions.length; ++inputPinIndex)
+		{
+			var pinPositionView = inputPinPositions[inputPinIndex];
+			ctx.beginPath();
+			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadius, 0.0, tau);
+			ctx.fill(); ctx.stroke();
+		}
+
+		// Draw output pins
+		for(var outputPinIndex = 0; outputPinIndex < outputPinPositions.length; ++outputPinIndex)
+		{
+			var pinPositionView = outputPinPositions[outputPinIndex];
+			ctx.beginPath();
+			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadius, 0.0, tau);
+			ctx.fill(); ctx.stroke();
 		}
 
 		// Change cursor?
@@ -211,13 +253,12 @@ class CircuitCanvasRenderer
 		// Grab workspace extents for current view
 		var bottomLeftView = { x: 0, y: 0 }, topRightView = { x: this.canvas.width, y: this.canvas.height };
 		var bottomLeftWorkspace = this.viewPositionToWorkspacePosition(bottomLeftView);
-		var topRightWorkspace = this.viewPositionToWorkspacePosition(topRightView);
 
 		// Setup constants
 		var zoom = this.view.zoom;
 		var snapPointSpacing = this.config.gridSnapSpacing;
 		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0);
-		var snapPointBorderThickness = 1.0, tau = (2 * Math.PI);
+		var snapPointBorderThickness = 1.0;
 
 		// Calculate view co-ordinates for first (bottom left) snap point
 		var firstSnapPointX = bottomLeftWorkspace.x - (bottomLeftWorkspace.x % snapPointSpacing);

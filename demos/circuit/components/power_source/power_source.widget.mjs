@@ -26,6 +26,11 @@ class PowerSourceWidget
 	{
 		return { image: "power_source", width: 60, height: 60 };
 	}
+
+	getOutputPinPosition(outputPinIndex)
+	{
+		return { x: 63, y: 30 };
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

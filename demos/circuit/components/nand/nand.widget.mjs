@@ -26,6 +26,20 @@ class NandWidget
 	{
 		return { image: "nand", width: 54, height: 40 };
 	}
+
+	getInputPinPosition(inputPinIndex)
+	{
+		switch(inputPinIndex)
+		{
+			case 0: return { x: 0, y: 10.35 };
+			case 1: return { x: 0, y: 29.65 };
+		}
+	}
+
+	getOutputPinPosition(outputPinIndex)
+	{
+		return { x: 56.8, y: 20 };
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
