@@ -41,7 +41,7 @@ function validateObject(object, requiredFields, requiredFunctions)
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Maths
+// AABB operations
 function pointInsideAABB(point, aabb)
 {
 	if(point.x < aabb.lowerBound.x) { return false; }
@@ -64,13 +64,32 @@ function overlapAABB(aabb1, aabb2)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
+function expandAABBFromCentre(aabb, expansionFactor)
+{
+	var centre = { x: (aabb.lowerBound.x + aabb.upperBound.x) * 0.5, y: (aabb.lowerBound.y + aabb.upperBound.y) * 0.5 };
+	var enlargedLowerBound = { x: centre.x + ((aabb.lowerBound.x - centre.x) * expansionFactor), y: centre.y + ((aabb.lowerBound.y - centre.y) * expansionFactor) };
+	var enlargedUpperBound = { x: centre.x + ((aabb.upperBound.x - centre.x) * expansionFactor), y: centre.y + ((aabb.upperBound.y - centre.y) * expansionFactor) };
+	return { lowerBound: enlargedLowerBound, upperBound: enlargedUpperBound };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function expandAABBToContain(aabb1, aabb2)
+{
+	var combinedLowerBound = { x: Math.min(aabb1.lowerBound.x, aabb2.lowerBound.x), y: Math.min(aabb1.lowerBound.y, aabb2.lowerBound.y) };
+	var combinedUpperBound = { x: Math.max(aabb1.upperBound.x, aabb2.upperBound.x), y: Math.max(aabb1.upperBound.y, aabb2.upperBound.y) };
+	return { lowerBound: combinedLowerBound, upperBound: combinedUpperBound };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Maths
 function clamp(x, min, max)
 {
 	return Math.min(Math.max(x, min), max);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
-
+// Images
 async function loadImage(imageSrc)
 {
 	return new Promise((resolve) => {
@@ -89,6 +108,8 @@ export
 	validateObject,
 	pointInsideAABB,
 	overlapAABB,
+	expandAABBFromCentre,
+	expandAABBToContain,
 	clamp,
 	loadImage
 }
