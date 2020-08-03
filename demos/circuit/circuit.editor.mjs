@@ -43,7 +43,6 @@ var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
 var draggingComponent = null;
 var draggingComponentOriginalPosition = { };
-var isDragging = false;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
@@ -99,6 +98,7 @@ async function init()
 
 	// Setup renderer defaults
 	workspaceRenderer.setGridSnapSpacing(100);
+	workspaceRenderer.setGridVisible(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW);
 
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
@@ -212,17 +212,8 @@ function onMouseMove(e)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
+function onStartDragging()
 {
-	var componentName = componentPickerItem.data().componentDescriptor.name;
-	draggingComponentPickerItem = componentPickerItem;
-	isDragging = true;
-
-	// Show and move icon
-	draggingComponentPickerItemIcon.css('background-image', `url('${componentPickerItem.data().icon}')`);
-	draggingComponentPickerItemIcon.show();
-	updateDraggingComponentPickerItemIconPosition(x, y);
-
 	// Toggle grid visibility?
 	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
 	{
@@ -232,17 +223,47 @@ function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onCancelDraggingComponentPickerItem()
+function onStopDragging()
 {
-	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
-	draggingComponentPickerItem = null;
-	isDragging = false;
-
 	// Toggle grid visibility?
 	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
 	{
 		workspaceRenderer.setGridVisible(false);
 	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function isDragging()
+{
+	return (draggingComponentPickerItem != null) || (draggingComponent != null);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onStartDraggingComponentPickerItem(componentPickerItem, x, y)
+{
+	onStartDragging();
+
+	// Set dragged component picker item
+	var componentName = componentPickerItem.data().componentDescriptor.name;
+	draggingComponentPickerItem = componentPickerItem;
+
+	// Show and move icon
+	draggingComponentPickerItemIcon.css('background-image', `url('${componentPickerItem.data().icon}')`);
+	draggingComponentPickerItemIcon.show();
+	updateDraggingComponentPickerItemIconPosition(x, y);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCancelDraggingComponentPickerItem()
+{
+	onStopDragging();
+
+	// Clear dragged component picker item
+	var componentName = draggingComponentPickerItem.data().componentDescriptor.name;
+	draggingComponentPickerItem = null;
 
 	// Hide icon
 	draggingComponentPickerItemIcon.hide();
@@ -252,16 +273,11 @@ function onCancelDraggingComponentPickerItem()
 
 function onFinishDraggingComponentPickerItem(x, y)
 {
-	var componentDescriptor = draggingComponentPickerItem.data().componentDescriptor;
-	var componentName = componentDescriptor.name;
-	draggingComponentPickerItem = null;
-	isDragging = false;
+	onStopDragging();
 
-	// Toggle grid visibility?
-	if(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING)
-	{
-		workspaceRenderer.setGridVisible(false);
-	}
+	// Extract descriptor and clear dragged component picker item
+	var componentDescriptor = draggingComponentPickerItem.data().componentDescriptor;
+	draggingComponentPickerItem = null;
 
 	// Hide icon
 	draggingComponentPickerItemIcon.hide("puff", { percent: 150 }, 300);
@@ -294,6 +310,8 @@ function updateDraggingComponentPickerItemIconPosition(x, y)
 
 function onStartDraggingComponent(component, x, y)
 {
+	onStartDragging();
+
 	// Store dragged component
 	draggingComponentOriginalPosition = workspace.getComponentPosition(component);
 	draggingComponent = component;
@@ -312,6 +330,8 @@ function updateDraggingComponent(x, y)
 
 function onCancelDraggingComponent(x, y)
 {
+	onStopDragging();
+
 	// Put component back where it was before we started moving it
 	workspace.setComponentPosition(draggingComponent, draggingComponentOriginalPosition);
 
@@ -323,6 +343,8 @@ function onCancelDraggingComponent(x, y)
 
 function onFinishDraggingComponent(x, y)
 {
+	onStopDragging();
+
 	// Clear dragged component
 	draggingComponent = null;
 }
@@ -444,7 +466,7 @@ function onSettingChanged(settingName, newValue)
 			switch(newValue)
 			{
 				case EditorSettings.GRID_MODE_SHOW: { workspaceRenderer.setGridVisible(true); break; }
-				case EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING: { workspaceRenderer.setGridVisible(isDragging); }
+				case EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING: { workspaceRenderer.setGridVisible(isDragging()); }
 				case EditorSettings.GRID_MODE_HIDE: { workspaceRenderer.setGridVisible(false); }
 			}
 			break;
