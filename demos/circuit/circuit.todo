@@ -1,3 +1,4 @@
+☐ BUG: Pin AABBs do not contribute to component culling (so component is culled whilst pins are still technically on screen)
 ☐ Add "toggle render stats" to toolbar and have renderer draw the following:
 	☐ Total components Vs drawn components (to test culling)
 	☐ Component under cursor
