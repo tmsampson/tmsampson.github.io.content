@@ -62,6 +62,8 @@ class CircuitCanvasRenderer
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
 		this.componentUnderCursor = null;
+		this.inputPinIndexUnderCursor = -1;
+		this.outputPinIndexUnderCursor = -1;
 
 		// Init config
 		this.config =
@@ -125,6 +127,8 @@ class CircuitCanvasRenderer
 
 		// Clear state
 		this.componentUnderCursor = null;
+		this.inputPinIndexUnderCursor = -1;
+		this.outputPinIndexUnderCursor = -1;
 
 		// Render grid snap points?
 		if(this.config.gridVisible)
@@ -133,7 +137,7 @@ class CircuitCanvasRenderer
 		}
 
 		// Render components
-		var zoom = this.view.zoom, pinRadius = 3 * zoom, pinLineWidth = 2;
+		var zoom = this.view.zoom, pinRadius = 3 * zoom, pinLineWidth = 2, pinUnderCursorIndex = -1;
 		var components = this.workspace.components, inputPinPositions = [], outputPinPositions = [];
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
@@ -198,11 +202,16 @@ class CircuitCanvasRenderer
 				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
 				inputPinPositions.push(pinPositionView);
 
-				// Expand mouse-over region to include pin?
-				if(this.componentUnderCursor == null)
+				// Check for mouse-over input pin?
+				if((this.componentUnderCursor == null) && (this.inputPinIndexUnderCursor == -1))
 				{
 					var pinAABB = this.getPinAABB(pinPositionView, pinRadius);
-					mouseoverAABB = circuit_utils.expandAABBToContain(mouseoverAABB, pinAABB);
+					if(circuit_utils.pointInsideAABB(this.cursorPositionView, pinAABB))
+					{
+						this.componentUnderCursor = component;
+						this.inputPinIndexUnderCursor = inputPinIndex;
+						pinUnderCursorIndex = (inputPinPositions.length - 1);
+					}
 				}
 			}
 
@@ -213,15 +222,20 @@ class CircuitCanvasRenderer
 				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
 				outputPinPositions.push(pinPositionView);
 
-				// Expand mouse-over region to include pin?
-				if(this.componentUnderCursor == null)
+				// Check for mouse-over input pin?
+				if((this.componentUnderCursor == null) && (this.outputPinIndexUnderCursor == -1))
 				{
 					var pinAABB = this.getPinAABB(pinPositionView, pinRadius);
-					mouseoverAABB = circuit_utils.expandAABBToContain(mouseoverAABB, pinAABB);
+					if(circuit_utils.pointInsideAABB(this.cursorPositionView, pinAABB))
+					{
+						this.componentUnderCursor = component;
+						this.outputPinIndexUnderCursor = outputPinIndex;
+						pinUnderCursorIndex = (outputPinPositions.length - 1);
+					}
 				}
 			}
 
-			// Check if under cursor
+			// Check if component is under cursor
 			if(this.componentUnderCursor == null)
 			{
 				if(circuit_utils.pointInsideAABB(this.cursorPositionView, mouseoverAABB))
@@ -252,11 +266,26 @@ class CircuitCanvasRenderer
 			ctx.fill(); ctx.stroke();
 		}
 
-		// Change cursor?
-		if(!this.isPanning)
+		// Apply mouseover effects
+		var isComponentUnderCursor = (this.componentUnderCursor != null);
+		if(isComponentUnderCursor)
 		{
-			var isComponentUnderCursor = (this.componentUnderCursor != null);
-			this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
+			// Update cursor?
+			if(!this.isPanning)
+			{
+				this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
+			}
+
+			// Draw highlighted pin?
+			if(pinUnderCursorIndex != -1)
+			{
+				var pinList = (this.inputPinIndexUnderCursor >= 0)? inputPinPositions : outputPinPositions;
+				var pinPositionView = pinList[pinUnderCursorIndex];
+				ctx.fillStyle = "#00FF00";
+				ctx.beginPath();
+				ctx.arc(pinPositionView.x, pinPositionView.y, pinRadius, 0.0, tau);
+				ctx.fill(); ctx.stroke();
+			}
 		}
 	}
 
