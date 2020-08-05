@@ -155,7 +155,7 @@ class CircuitCanvasRenderer
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
 		var pinRadiusView = this.config.pinRadius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pinHoverMultiplier;
-		var pinRenderPositions = [], pinRenderHighlightIndex = -1, renderedComponentCount = 0;
+		var pinRenderPositions = [], pinRenderHighlightIndex = -1, renderedComponentCount = 0, totalPinCount = 0;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
@@ -197,20 +197,8 @@ class CircuitCanvasRenderer
 				upperBound: { x: widgetViewPositionBottomLeft.x + widgetViewSize.x, y: widgetViewPositionBottomLeft.y + widgetViewSize.y }
 			};
 
-			// Skip components outside of view
-			if(!circuit_utils.overlapAABB(widgetViewAABB ,viewAABB))
-			{
-				continue;
-			}
-
-			// Calculate widget size
-			var widgetWidthView = (widgetViewAABB.upperBound.x - widgetViewAABB.lowerBound.x);
-			var widgetHeightView = (widgetViewAABB.upperBound.y - widgetViewAABB.lowerBound.y);
-
-			// Draw widget image
-			var widgetImage = imageDescriptor.loadedImage;
-			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
-			++renderedComponentCount;
+			// Update pin counts
+			totalPinCount += (component.inputs.length + component.outputs.length);
 
 			// Gather input pins
 			var mouseoverAABB = widgetViewAABB;
@@ -218,13 +206,22 @@ class CircuitCanvasRenderer
 			{
 				var pinPositionLocal = widget.getInputPinPosition(pinRenderIndex);
 				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
+				var pinAABBView = this.getPinAABB(pinPositionView, pinRadiusView);
+
+				// Skip pins outside of view
+				if(!circuit_utils.overlapAABB(pinAABBView, viewAABB))
+				{
+					continue;
+				}
+
+				// Store pin for rendering
 				pinRenderPositions.push(pinPositionView);
 
 				// Check for mouse-over input pin?
 				if((this.cursorInfo.component == null) && (this.cursorInfo.inputPinIndex == -1))
 				{
-					var pinAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
-					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinAABBView))
+					var pinHoverAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
+					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
 					{
 						this.cursorInfo.component = component;
 						this.cursorInfo.inputPinIndex = pinRenderIndex;
@@ -238,13 +235,22 @@ class CircuitCanvasRenderer
 			{
 				var pinPositionLocal = widget.getOutputPinPosition(outputPinIndex);
 				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
+				var pinAABBView = this.getPinAABB(pinPositionView, pinRadiusView);
+
+				// Skip pins outside of view
+				if(!circuit_utils.overlapAABB(pinAABBView, viewAABB))
+				{
+					continue;
+				}
+
+				// Store pin for rendering
 				pinRenderPositions.push(pinPositionView);
 
 				// Check for mouse-over input pin?
 				if((this.cursorInfo.component == null) && (this.cursorInfo.outputPinIndex == -1))
 				{
-					var pinAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
-					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinAABBView))
+					var pinHoverAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
+					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
 					{
 						this.cursorInfo.component = component;
 						this.cursorInfo.outputPinIndex = outputPinIndex;
@@ -252,6 +258,21 @@ class CircuitCanvasRenderer
 					}
 				}
 			}
+
+			// Skip components outside of view
+			if(!circuit_utils.overlapAABB(widgetViewAABB, viewAABB))
+			{
+				continue;
+			}
+
+			// Calculate widget size
+			var widgetWidthView = (widgetViewAABB.upperBound.x - widgetViewAABB.lowerBound.x);
+			var widgetHeightView = (widgetViewAABB.upperBound.y - widgetViewAABB.lowerBound.y);
+
+			// Draw widget image
+			var widgetImage = imageDescriptor.loadedImage;
+			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
+			++renderedComponentCount;
 
 			// Check if component is under cursor
 			if(this.cursorInfo.component == null)
@@ -304,9 +325,8 @@ class CircuitCanvasRenderer
 			var averageFps = Math.round(1.0 / averageFrameTimeS);
 
 			// Render state
-			var stats = `Total components: ${components.length}`;
-			stats += ` | Rendered components: ${renderedComponentCount}`;
-			stats += ` | Rendered pins: ${pinRenderPositions.length}`;
+			var stats = `Rendered components: (${renderedComponentCount}/${components.length})`;
+			stats += ` | Rendered pins: (${pinRenderPositions.length}/${totalPinCount})`;
 			stats += ` | Zoom = ${zoom.toFixed(2)}`;
 			stats += ` | Frame time = ${(averageFrameTimeS * 1000).toFixed(2)}ms (${averageFps} fps)`;
 			ctx.font = "14px Arial"; ctx.fillStyle = "#333333";
