@@ -1,5 +1,4 @@
 ☐ Add "toggle render stats" to toolbar and have renderer draw the following:
 	☐ Total components Vs drawn components (to test culling)
 	☐ Component under cursor
-☐ Start rendering input/output pins
 ☐ Start rendering connections: https://github.com/pkorac/cardinal-spline-js

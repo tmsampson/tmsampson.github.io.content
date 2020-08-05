@@ -71,7 +71,10 @@ class CircuitCanvasRenderer
 			zoomSpeed: 0.15,
 			gridVisible: true,
 			gridSnapSpacing: 100,
-			gridSnapRadius: 20
+			gridSnapRadius: 20,
+			pinRadius: 3,
+			pinHoverMultiplier: 1.5,
+			pinLineWidth: 2
 		};
 
 		// Create canvas
@@ -135,8 +138,10 @@ class CircuitCanvasRenderer
 		}
 
 		// Render components
-		var zoom = this.view.zoom, pinRadius = 3 * zoom, pinLineWidth = 2, pinUnderCursorIndex = -1;
-		var components = this.workspace.components, pinRenderPositions = [], pinRenderHighlightIndex = -1;
+		var zoom = this.view.zoom;
+		var components = this.workspace.components;
+		var pinRadiusView = this.config.pinRadius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pinHoverMultiplier;
+		var pinRenderPositions = [], pinRenderHighlightIndex = -1;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
@@ -203,7 +208,7 @@ class CircuitCanvasRenderer
 				// Check for mouse-over input pin?
 				if((this.cursorInfo.component == null) && (this.cursorInfo.inputPinIndex == -1))
 				{
-					var pinAABBView = this.getPinAABB(pinPositionView, pinRadius);
+					var pinAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
 					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinAABBView))
 					{
 						this.cursorInfo.component = component;
@@ -223,7 +228,7 @@ class CircuitCanvasRenderer
 				// Check for mouse-over input pin?
 				if((this.cursorInfo.component == null) && (this.cursorInfo.outputPinIndex == -1))
 				{
-					var pinAABBView = this.getPinAABB(pinPositionView, pinRadius);
+					var pinAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
 					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinAABBView))
 					{
 						this.cursorInfo.component = component;
@@ -244,34 +249,31 @@ class CircuitCanvasRenderer
 		}
 
 		// Draw pins
-		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = pinLineWidth;
+		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = this.config.pinLineWidth;
 		for(var pinRenderIndex = 0; pinRenderIndex < pinRenderPositions.length; ++pinRenderIndex)
 		{
 			var pinPositionView = pinRenderPositions[pinRenderIndex];
 			ctx.beginPath();
-			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadius, 0.0, tau);
+			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadiusView, 0.0, tau);
 			ctx.fill(); ctx.stroke();
 		}
 
 		// Draw highlighted pin?
-		if(pinRenderHighlightIndex >= 0)
+		var isPinUnderCursor = (pinRenderHighlightIndex >= 0);
+		if(isPinUnderCursor)
 		{
-			ctx.strokeStyle = "#493333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = pinLineWidth;
+			ctx.strokeStyle = "#493333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = this.config.pinLineWidth;
 			var pinPositionView = pinRenderPositions[pinRenderHighlightIndex];
 			ctx.beginPath();
-			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadius, 0.0, tau);
+			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadiusView, 0.0, tau);
 			ctx.fill(); ctx.stroke();
 		}
 
-		// Apply mouseover effects
-		var isComponentUnderCursor = (this.cursorInfo.component != null);
-		if(isComponentUnderCursor)
+		// Apply mouseover effects?
+		if(!this.isPanning)
 		{
-			// Update cursor?
-			if(!this.isPanning)
-			{
-				this.canvas.style.cursor = isComponentUnderCursor? "pointer" : "default";
-			}
+			var isComponentUnderCursor = (this.cursorInfo.component != null);
+			this.canvas.style.cursor = isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default");
 		}
 	}
 
