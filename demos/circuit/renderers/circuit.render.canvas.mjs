@@ -63,6 +63,11 @@ class CircuitCanvasRenderer
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
 		this.cursorInfo = { positionView: { x: -1, y: -1 }, component: null, inputPinIndex: -1, outputPinIndex: -1 };
 
+		// Init frame time tracking
+		this.frameTimeEntriesInitialised = false;
+		this.frameTimeEntryCount = 60; this.frameTimeEntryIndex = 0;
+		this.frameTimeEntries = Array(this.frameTimeEntryCount);
+
 		// Init config
 		this.config =
 		{
@@ -107,8 +112,17 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	onUpdate(e)
+	onUpdate(deltaS)
 	{
+		// Track frame time over multiple frames
+		if(!this.frameTimeEntriesInitialised && deltaS > 0.0)
+		{
+			this.frameTimeEntries.fill(deltaS);
+			this.frameTimeEntriesInitialised = true;
+		}
+		this.frameTimeEntries[this.frameTimeEntryIndex] = deltaS;
+		this.frameTimeEntryIndex = (this.frameTimeEntryIndex + 1) % this.frameTimeEntryCount;
+
 		// Resize canvas to match container
 		this.updateCanvasSize();
 		
@@ -119,7 +133,7 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	onRender(e)
+	onRender(deltaS)
 	{
 		// Clear canvas
 		var ctx = this.ctx;
@@ -141,7 +155,7 @@ class CircuitCanvasRenderer
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
 		var pinRadiusView = this.config.pinRadius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pinHoverMultiplier;
-		var pinRenderPositions = [], pinRenderHighlightIndex = -1;
+		var pinRenderPositions = [], pinRenderHighlightIndex = -1, renderedComponentCount = 0;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
@@ -196,6 +210,7 @@ class CircuitCanvasRenderer
 			// Draw widget image
 			var widgetImage = imageDescriptor.loadedImage;
 			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
+			++renderedComponentCount;
 
 			// Gather input pins
 			var mouseoverAABB = widgetViewAABB;
@@ -274,6 +289,28 @@ class CircuitCanvasRenderer
 		{
 			var isComponentUnderCursor = (this.cursorInfo.component != null);
 			this.canvas.style.cursor = isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default");
+		}
+
+		// Draw render stats?
+		if(this.config.showRenderStats)
+		{
+			// Calculate average fps
+			var averageFrameTimeS = 0.0;
+			for(var frameIndex = 0; frameIndex < this.frameTimeEntryCount; ++frameIndex)
+			{
+				averageFrameTimeS += this.frameTimeEntries[frameIndex];
+			}
+			averageFrameTimeS /= this.frameTimeEntryCount;
+			var averageFps = Math.round(1.0 / averageFrameTimeS);
+
+			// Render state
+			var stats = `Total components: ${components.length}`;
+			stats += ` | Rendered components: ${renderedComponentCount}`;
+			stats += ` | Rendered pins: ${pinRenderPositions.length}`;
+			stats += ` | Zoom = ${zoom.toFixed(2)}`;
+			stats += ` | Frame time = ${(averageFrameTimeS * 1000).toFixed(2)}ms (${averageFps} fps)`;
+			ctx.font = "14px Arial"; ctx.fillStyle = "#333333";
+			ctx.fillText(stats, 10, this.canvas.height - 11);
 		}
 	}
 
@@ -474,6 +511,13 @@ class CircuitCanvasRenderer
 	setGridSnapSpacing(spacing)
 	{
 		this.config.gridSnapSpacing = spacing;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	setShowRenderStats(show)
+	{
+		this.config.showRenderStats = show;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

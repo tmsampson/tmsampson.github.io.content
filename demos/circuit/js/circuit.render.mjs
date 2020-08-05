@@ -100,7 +100,7 @@ function validateRendererDescriptor(rendererDescriptor)
 function validateRendererInstance(renderer)
 {
 	var requiredFields = [ ];
-	var requiredFunctions = [ "onUpdate", "onRender", "setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing" ];
+	var requiredFunctions = [ "onUpdate", "onRender", "setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing", "setShowRenderStats" ];
 	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
 }
 
@@ -266,10 +266,21 @@ function onCreateWorkspace(workspace, containerElement)
 	{
 		// Start render loop
 		renderLoopStarted = true;
-		var renderLoop = (e) =>
+		var previousTimestamp, firstFrame = true;
+		var renderLoop = (timestamp) =>
 		{
-			onUpdate(e);
-			onRender(e);
+			// Calculate dt
+			if(firstFrame) { previousTimestamp = timestamp };
+			var deltaMs = (timestamp - previousTimestamp);
+			var deltaS = deltaMs / 1000;
+			previousTimestamp = timestamp;
+
+			// Update and render
+			onUpdate(deltaS);
+			onRender(deltaS);
+
+			// Request next frame
+			firstFrame = false;
 			window.requestAnimationFrame(renderLoop);
 		};
 		window.requestAnimationFrame(renderLoop);
@@ -278,7 +289,7 @@ function onCreateWorkspace(workspace, containerElement)
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Render loop
-function onUpdate(e)
+function onUpdate(deltaS)
 {
 	// Update all renderers
 	for (var workspace in renderers)
@@ -287,14 +298,14 @@ function onUpdate(e)
 		for(var i = 0; i < rendererInstances.length; ++i)
 		{
 			var rendererInstance = rendererInstances[i];
-			rendererInstance.onUpdate(e);
+			rendererInstance.onUpdate(deltaS);
 		}
 	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onRender(e)
+function onRender(deltaS)
 {
 	// Render all renderers
 	for (var workspace in renderers)
@@ -303,7 +314,7 @@ function onRender(e)
 		for(var i = 0; i < rendererInstances.length; ++i)
 		{
 			var rendererInstance = rendererInstances[i];
-			rendererInstance.onRender(e);
+			rendererInstance.onRender(deltaS);
 		}
 	}
 }

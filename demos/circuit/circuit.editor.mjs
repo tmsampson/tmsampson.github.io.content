@@ -99,6 +99,7 @@ async function init()
 	// Setup renderer defaults
 	workspaceRenderer.setGridSnapSpacing(100);
 	workspaceRenderer.setGridVisible(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW);
+	workspaceRenderer.setShowRenderStats(getEditorSettingValue(EditorSettings.RENDER_STATS) == EditorSettings.RENDER_STATS_ENABLED);
 
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
@@ -434,7 +435,7 @@ function snapPositionToGrid(workspacePosition)
 function initSettingsPanel()
 {
 	settingsPanel = $("#editor_settings");
-	var settingsPanelWidth = 480, settingsPanelHeight = 234, settingsPanelPadding = 30;
+	var settingsPanelWidth = 390, settingsPanelHeight = 316, settingsPanelPadding = 30;
 	var windowWidth = $(window).width();
 	settingsPanel.dialog({ width: settingsPanelWidth, height:settingsPanelHeight, closeOnEscape: false, dialogClass: "noclose" });
 
@@ -446,6 +447,7 @@ function initSettingsPanel()
 
 	// Bind setting change events
 	bindSettingChangedEvent(EditorSettings.GRID_MODE);
+	bindSettingChangedEvent(EditorSettings.RENDER_STATS);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -466,8 +468,17 @@ function onSettingChanged(settingName, newValue)
 			switch(newValue)
 			{
 				case EditorSettings.GRID_MODE_SHOW: { workspaceRenderer.setGridVisible(true); break; }
-				case EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING: { workspaceRenderer.setGridVisible(isDragging()); }
-				case EditorSettings.GRID_MODE_HIDE: { workspaceRenderer.setGridVisible(false); }
+				case EditorSettings.GRID_MODE_SHOW_WHILST_DRAGGING: { workspaceRenderer.setGridVisible(isDragging()); break; }
+				case EditorSettings.GRID_MODE_HIDE: { workspaceRenderer.setGridVisible(false); break; }
+			}
+			break;
+		}
+		case EditorSettings.RENDER_STATS:
+		{
+			switch(newValue)
+			{
+				case EditorSettings.RENDER_STATS_ENABLED: { workspaceRenderer.setShowRenderStats(true); break; }
+				case EditorSettings.RENDER_STATS_DISABLED: { workspaceRenderer.setShowRenderStats(false); break; }
 			}
 			break;
 		}
@@ -497,6 +508,11 @@ const EditorSettings =
 	GRID_SNAP: "editor_settings_gridsnap",
 	GRID_SNAP_ENABLED: "enabled",
 	GRID_SNAP_DISABLED: "disabled",
+
+	// Render stats
+	RENDER_STATS: "editor_settings_renderstats",
+	RENDER_STATS_ENABLED: "enabled",
+	RENDER_STATS_DISABLED: "disabled",
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
