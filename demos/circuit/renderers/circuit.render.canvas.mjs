@@ -305,13 +305,6 @@ class CircuitCanvasRenderer
 			ctx.fill(); ctx.stroke();
 		}
 
-		// Apply mouseover effects?
-		if(!this.isPanning)
-		{
-			var isComponentUnderCursor = (this.cursorInfo.component != null);
-			this.canvas.style.cursor = isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default");
-		}
-
 		// Draw render stats?
 		if(this.config.showRenderStats)
 		{
@@ -507,9 +500,30 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	userIsInteracting()
+	{
+		return this.isPanning;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	getComponentUnderCursor()
 	{
 		return this.cursorInfo.component;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getInputPinIndexUnderCursor()
+	{
+		return this.cursorInfo.inputPinIndex;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getOutputPinIndexUnderCursor()
+	{
+		return this.cursorInfo.outputPinIndex;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

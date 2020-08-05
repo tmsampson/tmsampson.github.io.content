@@ -100,7 +100,13 @@ function validateRendererDescriptor(rendererDescriptor)
 function validateRendererInstance(renderer)
 {
 	var requiredFields = [ ];
-	var requiredFunctions = [ "onUpdate", "onRender", "setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing", "setShowRenderStats" ];
+	var requiredFunctions =
+	[
+		"onUpdate", "onRender",
+		"setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing",
+		"setShowRenderStats", "userIsInteracting",
+		"getComponentUnderCursor", "getInputPinIndexUnderCursor", "getOutputPinIndexUnderCursor"
+	];
 	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
 }
 
@@ -246,7 +252,8 @@ function onCreateWorkspace(workspace, containerElement)
 		var validationResult = validateRendererInstance(rendererInstance);
 		if(!validationResult.value)
 		{
-			return { value: null, message: `Renderer '${rendererName}': Validation failed. ${validationResult.message}` };
+			console.error(`Renderer '${rendererName}': Validation failed. ${validationResult.message}`);
+			return null;
 		}
 
 		// Store renderer instance for this workspace

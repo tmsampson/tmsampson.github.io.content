@@ -34,6 +34,7 @@ var componentPicker = null, settingsPanel = null;
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
 var workspace = null;
+var workspaceCanvas = null;
 var workspaceRenderer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -96,6 +97,9 @@ async function init()
 		return false;
 	}
 
+	// Grab canvas
+	workspaceCanvas = $("#editor_canvas_container canvas");
+
 	// Setup renderer defaults
 	workspaceRenderer.setGridSnapSpacing(100);
 	workspaceRenderer.setGridVisible(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW);
@@ -103,8 +107,8 @@ async function init()
 
 	// Bind mouse events
 	$(window).on("mouseup", (e) => onWindowMouseUp(e));
-	$("#editor_canvas_container canvas").on("mouseup", (e) => onCanvasMouseUp(e));
-	$("#editor_canvas_container canvas").on("mousedown", (e) => onCanvasMouseDown(e));
+	workspaceCanvas.on("mouseup", (e) => onCanvasMouseUp(e));
+	workspaceCanvas.on("mousedown", (e) => onCanvasMouseDown(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
 	return true;
 }
@@ -208,6 +212,18 @@ function onMouseMove(e)
 	if(draggingComponent != null)
 	{
 		updateDraggingComponent(e.pageX, e.pageY);
+	}
+
+	// Update cursor
+	// NOTE: Avoid modifying cursor if user is already interacting with renderer (zoom/pan etc)
+	if(!workspaceRenderer.userIsInteracting())
+	{
+		var componentUnderCursor = workspaceRenderer.getComponentUnderCursor();
+		var inputPinIndexUnderCursor = workspaceRenderer.getInputPinIndexUnderCursor();
+		var outputPinIndexUnderCursor = workspaceRenderer.getOutputPinIndexUnderCursor();
+		var isComponentUnderCursor = (componentUnderCursor != null);
+		var isPinUnderCursor = ((inputPinIndexUnderCursor >= 0) || (outputPinIndexUnderCursor >= 0));
+		setCursor(isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default"));
 	}
 }
 
@@ -378,6 +394,13 @@ function cursorPositionToViewPosition(x, y)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
+function setCursor(cursor)
+{
+	workspaceCanvas.css("cursor", cursor);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
 function onWindowMouseUp()
 {
 	// Cancel dragged component picker item
@@ -414,10 +437,25 @@ function onCanvasMouseUp(e)
 
 function onCanvasMouseDown(e)
 {
+	// Grab cursor info
 	var componentUnderCursor = workspaceRenderer.getComponentUnderCursor();
-	if(componentUnderCursor != null)
+	var inputPinIndexUnderCursor = workspaceRenderer.getInputPinIndexUnderCursor();
+	var outputPinIndexUnderCursor = workspaceRenderer.getOutputPinIndexUnderCursor();
+	var isComponentUnderCursor = (componentUnderCursor != null);
+	var isPinUnderCursor = ((inputPinIndexUnderCursor >= 0) || (outputPinIndexUnderCursor >= 0));
+
+	// Handle manipulation
+	if(isComponentUnderCursor)
 	{
-		onStartDraggingComponent(componentUnderCursor, e.pageX, e.pageY);
+		if(isPinUnderCursor)
+		{
+			// Start forming connection
+		}
+		else
+		{
+			// Start dragging component
+			onStartDraggingComponent(componentUnderCursor, e.pageX, e.pageY);
+		}
 	}
 }
 
