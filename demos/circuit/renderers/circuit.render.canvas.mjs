@@ -1,6 +1,7 @@
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Import
+import * as circuit from "../js/circuit.mjs";
 import * as circuit_render from "../js/circuit.render.mjs";
 import * as circuit_utils from "../js/circuit.utils.mjs";
 
@@ -62,6 +63,7 @@ class CircuitCanvasRenderer
 		this.panOrigin = { }
 		this.view = { focus: { x: 0, y: 0 }, zoom : 1.0, targetZoom: 1.0 };
 		this.cursorInfo = { positionView: { x: -1, y: -1 }, component: null, inputPinIndex: -1, outputPinIndex: -1 };
+		this.temporaryConnection = null;
 
 		// Init frame time tracking
 		this.frameTimeEntriesInitialised = false;
@@ -79,7 +81,8 @@ class CircuitCanvasRenderer
 			gridSnapRadius: 20,
 			pinRadius: 3,
 			pinHoverMultiplier: 1.5,
-			pinLineWidth: 2
+			pinLineWidth: 2,
+			connectionLineWidth: 4
 		};
 
 		// Create canvas
@@ -155,7 +158,7 @@ class CircuitCanvasRenderer
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
 		var pinRadiusView = this.config.pinRadius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pinHoverMultiplier;
-		var pinRenderPositions = [], pinRenderHighlightIndex = -1, renderedComponentCount = 0, totalPinCount = 0;
+		var pinRenderPositions = [], pinHighlightIndices = [], renderedComponentCount = 0, totalPinCount = 0;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
@@ -173,7 +176,7 @@ class CircuitCanvasRenderer
 				continue;
 			}
 
-			// Get image name
+			// Get details
 			var renderImage = widget.getRenderImage(component);
 
 			// Get image descriptor
@@ -202,9 +205,9 @@ class CircuitCanvasRenderer
 
 			// Gather input pins
 			var mouseoverAABB = widgetViewAABB;
-			for(var pinRenderIndex = 0; pinRenderIndex < component.inputs.length; ++pinRenderIndex)
+			for(var inputPinIndex = 0; inputPinIndex < component.inputs.length; ++inputPinIndex)
 			{
-				var pinPositionLocal = widget.getInputPinPosition(pinRenderIndex);
+				var pinPositionLocal = widget.getInputPinPosition(inputPinIndex);
 				var pinPositionView = { x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom), y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom) };
 				var pinAABBView = this.getPinAABB(pinPositionView, pinRadiusView);
 
@@ -218,15 +221,22 @@ class CircuitCanvasRenderer
 				pinRenderPositions.push(pinPositionView);
 
 				// Check for mouse-over input pin?
+				var pinUnderCursor = false;
 				if((this.cursorInfo.component == null) && (this.cursorInfo.inputPinIndex == -1))
 				{
 					var pinHoverAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
 					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
 					{
 						this.cursorInfo.component = component;
-						this.cursorInfo.inputPinIndex = pinRenderIndex;
-						pinRenderHighlightIndex = (pinRenderPositions.length - 1);
+						this.cursorInfo.inputPinIndex = inputPinIndex;
+						pinUnderCursor = true;
 					}
+				}
+
+				// Highlight this pin?
+				if(pinUnderCursor || this.isTemporaryConnectionSource(component, circuit.PinType.INPUT, inputPinIndex))
+				{
+					pinHighlightIndices.push(pinRenderPositions.length - 1);
 				}
 			}
 
@@ -247,6 +257,7 @@ class CircuitCanvasRenderer
 				pinRenderPositions.push(pinPositionView);
 
 				// Check for mouse-over input pin?
+				var pinUnderCursor = false;
 				if((this.cursorInfo.component == null) && (this.cursorInfo.outputPinIndex == -1))
 				{
 					var pinHoverAABBView = this.getPinAABB(pinPositionView, pinHoverRadiusView);
@@ -254,8 +265,14 @@ class CircuitCanvasRenderer
 					{
 						this.cursorInfo.component = component;
 						this.cursorInfo.outputPinIndex = outputPinIndex;
-						pinRenderHighlightIndex = (pinRenderPositions.length - 1);
+						pinUnderCursor = true;
 					}
+				}
+
+				// Highlight this pin?
+				if(pinUnderCursor || this.isTemporaryConnectionSource(component, circuit.PinType.OUTPUT, outputPinIndex))
+				{
+					pinHighlightIndices.push(pinRenderPositions.length - 1);
 				}
 			}
 
@@ -286,23 +303,39 @@ class CircuitCanvasRenderer
 
 		// Draw pins
 		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = this.config.pinLineWidth;
-		for(var pinRenderIndex = 0; pinRenderIndex < pinRenderPositions.length; ++pinRenderIndex)
+		for(var inputPinIndex = 0; inputPinIndex < pinRenderPositions.length; ++inputPinIndex)
 		{
-			var pinPositionView = pinRenderPositions[pinRenderIndex];
+			var pinPositionView = pinRenderPositions[inputPinIndex];
 			ctx.beginPath();
 			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadiusView, 0.0, tau);
 			ctx.fill(); ctx.stroke();
 		}
 
-		// Draw highlighted pin?
-		var isPinUnderCursor = (pinRenderHighlightIndex >= 0);
-		if(isPinUnderCursor)
+		// Draw highlighted pins?
+		ctx.strokeStyle = "#333333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = this.config.pinLineWidth;
+		for(var highlightedPinEntry = 0; highlightedPinEntry < pinHighlightIndices.length; ++ highlightedPinEntry)
 		{
-			ctx.strokeStyle = "#493333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = this.config.pinLineWidth;
-			var pinPositionView = pinRenderPositions[pinRenderHighlightIndex];
+			var highlightedPinIndex = pinHighlightIndices[highlightedPinEntry];
+			var pinPositionView = pinRenderPositions[highlightedPinIndex];
 			ctx.beginPath();
 			ctx.arc(pinPositionView.x, pinPositionView.y, pinRadiusView, 0.0, tau);
 			ctx.fill(); ctx.stroke();
+		}
+
+		// Draw temporary connection?
+		if(this.temporaryConnection != null)
+		{
+			var startComponent = this.temporaryConnection.startComponent;
+			var startPinType = this.temporaryConnection.startPinType, startPinIndex = this.temporaryConnection.startPinIndex;
+			var connectionStartPosition = this.getPinPosition(startComponent, startPinType, startPinIndex);
+			var connectionStartView = this.workspacePositionToViewPosition(connectionStartPosition);
+			var connectionEnd = this.getTemporaryConnectionEndPoint();
+			var connectionEndView = this.workspacePositionToViewPosition(connectionEnd);
+			ctx.strokeStyle = "#333333"; ctx.lineWidth = this.config.connectionLineWidth * zoom; ctx.lineCap = "round";
+			ctx.beginPath();
+			ctx.moveTo(connectionStartView.x, connectionStartView.y);
+			ctx.lineTo(connectionEndView.x, connectionEndView.y);
+			ctx.stroke();
 		}
 
 		// Draw render stats?
@@ -500,6 +533,64 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	renderTemporaryConnection(component, pinType, pinIndex, end)
+	{
+		this.temporaryConnection = { startComponent: component, startPinType: pinType, startPinIndex: pinIndex, end: end };
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	isTemporaryConnectionSource(component, pinType, pinIndex)
+	{
+		// Ignore if no temporary connection is active
+		if(this.temporaryConnection == null)
+		{
+			return false;
+		}
+
+		// Check if the pin provided is the temporary connection source
+		var startComponent = this.temporaryConnection.startComponent;
+		var startPinType = this.temporaryConnection.startPinType, startPinIndex = this.temporaryConnection.startPinIndex;
+		return (component == startComponent) && (pinType == startPinType) && (pinIndex == startPinIndex);
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getTemporaryConnectionEndPoint()
+	{
+		// Ignore if no temporary connection is active
+		if(this.temporaryConnection == null)
+		{
+			return { x: 0, y: 0 };
+		}
+
+		// Check to see if any pins are under cursor
+		var inputPinUnderCursor = (this.cursorInfo.inputPinIndex >= 0);
+		var outputPinUnderCursor = (this.cursorInfo.outputPinIndex >= 0);
+		if(inputPinUnderCursor || outputPinUnderCursor)
+		{
+			// Snap to pin under cursor
+			var component = this.cursorInfo.component;
+			var pinType = inputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
+			var pinIndex = inputPinUnderCursor? this.cursorInfo.inputPinIndex : this.cursorInfo.outputPinIndex;
+			return this.getPinPosition(component, pinType, pinIndex);
+		}
+		else
+		{
+			// Use end position provided
+			return this.temporaryConnection.end;
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	clearTemporaryConnection()
+	{
+		this.temporaryConnection = null;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
 	userIsInteracting()
 	{
 		return this.isPanning;
@@ -507,23 +598,9 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	getComponentUnderCursor()
+	getCursorInfo()
 	{
-		return this.cursorInfo.component;
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	getInputPinIndexUnderCursor()
-	{
-		return this.cursorInfo.inputPinIndex;
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------------
-
-	getOutputPinIndexUnderCursor()
-	{
-		return this.cursorInfo.outputPinIndex;
+		return this.cursorInfo;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -552,6 +629,20 @@ class CircuitCanvasRenderer
 	setShowRenderStats(show)
 	{
 		this.config.showRenderStats = show;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getPinPosition(component, pinType, pinIndex)
+	{
+		var widget = component.descriptor.widget;
+		var renderImage = widget.getRenderImage(component);
+		var widgetSize = { x: renderImage.width, y: renderImage.height };
+		var componentPosition = component.args.position;
+		var isInputPin = (pinType == circuit.PinType.INPUT);
+		var pinPositionLocal = isInputPin? widget.getInputPinPosition(pinIndex) : widget.getOutputPinPosition(pinIndex);
+		var componentBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
+		return { x: componentBottomLeft.x + pinPositionLocal.x, y: componentBottomLeft.y + pinPositionLocal.y };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

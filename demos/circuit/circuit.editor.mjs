@@ -44,6 +44,7 @@ var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
 var draggingComponent = null;
 var draggingComponentOriginalPosition = { };
+var draggingConnection = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
@@ -208,21 +209,25 @@ function onMouseMove(e)
 		updateDraggingComponentPickerItemIconPosition(e.pageX, e.pageY);
 	}
 
-	// Update dragged component
+	// Update dragged component?
 	if(draggingComponent != null)
 	{
 		updateDraggingComponent(e.pageX, e.pageY);
+	}
+
+	// Update dragged connection?
+	if(draggingConnection != null)
+	{
+		updateDraggingConnection(e.pageX, e.pageY);
 	}
 
 	// Update cursor
 	// NOTE: Avoid modifying cursor if user is already interacting with renderer (zoom/pan etc)
 	if(!workspaceRenderer.userIsInteracting())
 	{
-		var componentUnderCursor = workspaceRenderer.getComponentUnderCursor();
-		var inputPinIndexUnderCursor = workspaceRenderer.getInputPinIndexUnderCursor();
-		var outputPinIndexUnderCursor = workspaceRenderer.getOutputPinIndexUnderCursor();
-		var isComponentUnderCursor = (componentUnderCursor != null);
-		var isPinUnderCursor = ((inputPinIndexUnderCursor >= 0) || (outputPinIndexUnderCursor >= 0));
+		var cursorInfo = workspaceRenderer.getCursorInfo();
+		var isComponentUnderCursor = (cursorInfo.component != null);
+		var isPinUnderCursor = ((cursorInfo.inputPinIndex >= 0) || (cursorInfo.outputPinIndex >= 0));
 		setCursor(isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default"));
 	}
 }
@@ -368,6 +373,50 @@ function onFinishDraggingComponent(x, y)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
+function onStartDraggingConnection(component, pinType, pinIndex, x, y)
+{
+	onStartDragging();
+
+	// Store connection
+	draggingConnection = { component: component, pinType: pinType, pinIndex: pinIndex };
+
+	// Start rendering temporary connection
+	updateDraggingConnection(x, y);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function updateDraggingConnection(x, y)
+{
+	// Move connection
+	var end = workspaceRenderer.viewPositionToWorkspacePosition({ x: x, y: y });
+	workspaceRenderer.renderTemporaryConnection(draggingConnection.component, draggingConnection.pinType, draggingConnection.pinIndex, end);
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onCancelDraggingConnection()
+{
+	onStopDragging();
+
+	// Clear dragged connection
+	draggingConnection = null;
+	workspaceRenderer.clearTemporaryConnection();
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onFinishDraggingConnection()
+{
+	onStopDragging();
+
+	// Clear dragged connection
+	draggingConnection = null;
+	workspaceRenderer.clearTemporaryConnection();
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
 function cursorPositionToWorkspacePosition(x, y)
 {
 	var cursorPostionView = cursorPositionToViewPosition(x, y);
@@ -414,6 +463,12 @@ function onWindowMouseUp()
 	{
 		onCancelDraggingComponent();
 	}
+
+	// Cancel dragged connection
+	if(draggingConnection != null)
+	{
+		onCancelDraggingConnection();
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -431,6 +486,12 @@ function onCanvasMouseUp(e)
 	{
 		onFinishDraggingComponent(e.pageX, e.pageY);
 	}
+
+	// Finish dragging connection?
+	if(draggingConnection != null)
+	{
+		onFinishDraggingConnection(e.pageX, e.pageY);
+	}
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -438,11 +499,10 @@ function onCanvasMouseUp(e)
 function onCanvasMouseDown(e)
 {
 	// Grab cursor info
-	var componentUnderCursor = workspaceRenderer.getComponentUnderCursor();
-	var inputPinIndexUnderCursor = workspaceRenderer.getInputPinIndexUnderCursor();
-	var outputPinIndexUnderCursor = workspaceRenderer.getOutputPinIndexUnderCursor();
-	var isComponentUnderCursor = (componentUnderCursor != null);
-	var isPinUnderCursor = ((inputPinIndexUnderCursor >= 0) || (outputPinIndexUnderCursor >= 0));
+	var cursorInfo = workspaceRenderer.getCursorInfo();
+	var isComponentUnderCursor = (cursorInfo.component != null);
+	var isInputPinUnderCursor = (cursorInfo.inputPinIndex >= 0), isOutputPinUnderCursor = (cursorInfo.outputPinIndex >= 0);
+	var isPinUnderCursor = (isInputPinUnderCursor || isOutputPinUnderCursor);
 
 	// Handle manipulation
 	if(isComponentUnderCursor)
@@ -450,11 +510,14 @@ function onCanvasMouseDown(e)
 		if(isPinUnderCursor)
 		{
 			// Start forming connection
+			var pinType = isInputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
+			var pinIndex = isInputPinUnderCursor? cursorInfo.inputPinIndex : cursorInfo.outputPinIndex;
+			onStartDraggingConnection(cursorInfo.component, pinType, pinIndex, e.pageX, e.pageY);
 		}
 		else
 		{
 			// Start dragging component
-			onStartDraggingComponent(componentUnderCursor, e.pageX, e.pageY);
+			onStartDraggingComponent(cursorInfo.component, e.pageX, e.pageY);
 		}
 	}
 }
@@ -473,7 +536,7 @@ function snapPositionToGrid(workspacePosition)
 function initSettingsPanel()
 {
 	settingsPanel = $("#editor_settings");
-	var settingsPanelWidth = 390, settingsPanelHeight = 316, settingsPanelPadding = 30;
+	var settingsPanelWidth = 390, settingsPanelHeight = 318, settingsPanelPadding = 30;
 	var windowWidth = $(window).width();
 	settingsPanel.dialog({ width: settingsPanelWidth, height:settingsPanelHeight, closeOnEscape: false, dialogClass: "noclose" });
 

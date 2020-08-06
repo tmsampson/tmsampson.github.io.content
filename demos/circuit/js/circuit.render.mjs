@@ -105,7 +105,8 @@ function validateRendererInstance(renderer)
 		"onUpdate", "onRender",
 		"setGridVisible", "getGridSnapSpacing", "setGridSnapSpacing",
 		"setShowRenderStats", "userIsInteracting",
-		"getComponentUnderCursor", "getInputPinIndexUnderCursor", "getOutputPinIndexUnderCursor"
+		"getCursorInfo",
+		"renderTemporaryConnection", "clearTemporaryConnection"
 	];
 	return circuit_utils.validateObject(renderer, requiredFields, requiredFunctions);
 }
