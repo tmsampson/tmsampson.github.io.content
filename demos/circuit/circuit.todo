@@ -3,3 +3,6 @@
 	☐ Total components Vs drawn components (to test culling)
 	☐ Component under cursor
 ☐ Start rendering connections: https://github.com/pkorac/cardinal-spline-js
+☐ Implement re-route component
+☐ Implement LED component
+☐ Implement serialisation

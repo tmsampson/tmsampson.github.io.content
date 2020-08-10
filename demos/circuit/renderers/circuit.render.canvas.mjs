@@ -73,21 +73,15 @@ class CircuitCanvasRenderer
 		// Init config
 		this.config =
 		{
-			minZoom: 0.2,
-			maxZoom: 25.0,
-			zoomSpeed: 0.15,
-			gridVisible: true,
-			gridSnapSpacing: 100,
-			gridSnapRadius: 20,
-			pinRadius: 3,
-			pinHoverMultiplier: 1.5,
-			pinLineWidth: 2,
-			temporaryConnectionLineWidth: 4,
-			temporaryConnectionColour: "#7f0036",
-			regularConnectionColour: "#333333",
-			regularConnectionLineWidth: 4,
-			activeConnectionColour: "#33FF33",
-			activeConnectionLineWidth: 4,
+			zoom: { min: 0.2, max: 25.0, speed: 0.15 },
+			grid: { isVisible: true, spacing: 100, anchor: { radius: 3, radiusMin: 2, radiusMax: 6, borderThickness: 1 } },
+			pin: { radius: 3.0, radiusHoverMultiplier: 1.5, lineWidth: 2 },
+			connection:
+			{
+				temporary: { colour: "#7f0036", lineWidth: 4 },
+				regular: { colour: "#333333", lineWidth: 4 },
+				active: { colour: "#333333", lineWidth: 4 },
+			}
 		};
 
 		// Create canvas
@@ -135,7 +129,7 @@ class CircuitCanvasRenderer
 		this.updateCanvasSize();
 		
 		// Update smooth zoom
-		var currentZoom = this.view.zoom, targetZoom = this.view.targetZoom, zoomSpeed = this.config.zoomSpeed;
+		var currentZoom = this.view.zoom, targetZoom = this.view.targetZoom, zoomSpeed = this.config.zoom.speed;
 		this.view.zoom = (targetZoom * zoomSpeed) + (currentZoom * (1.0 - zoomSpeed));
 	}
 
@@ -154,7 +148,7 @@ class CircuitCanvasRenderer
 		this.cursorInfo.outputPinIndex = -1;
 
 		// Render grid snap points?
-		if(this.config.gridVisible)
+		if(this.config.grid.isVisible)
 		{
 			this.renderGridSnapPoints();
 		}
@@ -162,7 +156,7 @@ class CircuitCanvasRenderer
 		// Render components
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
-		var pinRadiusView = this.config.pinRadius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pinHoverMultiplier;
+		var pinRadiusView = this.config.pin.radius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pin.radiusHoverMultiplier;
 		var pinRenderPositions = [], pinHighlightIndices = [], renderedComponentCount = 0, totalPinCount = 0;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
@@ -309,7 +303,7 @@ class CircuitCanvasRenderer
 		}
 
 		// Draw pins
-		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = this.config.pinLineWidth;
+		ctx.strokeStyle = "#493333"; ctx.fillStyle = "#e9e9e9"; ctx.lineWidth = this.config.pin.lineWidth;
 		for(var inputPinIndex = 0; inputPinIndex < pinRenderPositions.length; ++inputPinIndex)
 		{
 			var pinPositionView = pinRenderPositions[inputPinIndex];
@@ -319,7 +313,7 @@ class CircuitCanvasRenderer
 		}
 
 		// Draw highlighted pins?
-		ctx.strokeStyle = "#333333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = this.config.pinLineWidth;
+		ctx.strokeStyle = "#333333"; ctx.fillStyle = "#00FF00"; ctx.lineWidth = this.config.pin.lineWidth;
 		for(var highlightedPinEntry = 0; highlightedPinEntry < pinHighlightIndices.length; ++ highlightedPinEntry)
 		{
 			var highlightedPinIndex = pinHighlightIndices[highlightedPinEntry];
@@ -331,7 +325,7 @@ class CircuitCanvasRenderer
 
 		// Render connections
 		var connections = this.workspace.getConnections();
-		ctx.strokeStyle = this.config.regularConnectionColour; ctx.lineWidth = this.config.regularConnectionLineWidth * zoom; ctx.lineCap = "round";
+		ctx.strokeStyle = this.config.connection.regular.colour; ctx.lineWidth = this.config.connection.regular.lineWidth * zoom; ctx.lineCap = "round";
 		for(var connectionIndex = 0; connectionIndex < connections.length; ++connectionIndex)
 		{
 			var connectionInfo = connections[connectionIndex];
@@ -352,7 +346,7 @@ class CircuitCanvasRenderer
 			var connectionStartPositionView = this.workspacePositionToViewPosition(connectionStartPosition);
 			var connectionEndPosition = this.getTemporaryConnectionEndPosition();
 			var connectionEndPositionView = this.workspacePositionToViewPosition(connectionEndPosition);
-			ctx.strokeStyle = this.config.temporaryConnectionColour; ctx.lineWidth = this.config.temporaryConnectionLineWidth * zoom; ctx.lineCap = "round";
+			ctx.strokeStyle = this.config.connection.temporary.colour; ctx.lineWidth = this.config.connection.temporary.lineWidth * zoom; ctx.lineCap = "round";
 			ctx.beginPath();
 			ctx.moveTo(connectionStartPositionView.x, connectionStartPositionView.y);
 			ctx.lineTo(connectionEndPositionView.x, connectionEndPositionView.y);
@@ -392,9 +386,9 @@ class CircuitCanvasRenderer
 
 		// Setup constants
 		var zoom = this.view.zoom;
-		var snapPointSpacing = this.config.gridSnapSpacing;
-		var snapPointRadius = circuit_utils.clamp(3.0 * zoom, 2.0, 6.0);
-		var snapPointBorderThickness = 1.0;
+		var snapPointSpacing = this.config.grid.spacing;
+		var snapPointRadius = circuit_utils.clamp(this.config.grid.anchor.radius * zoom, this.config.grid.anchor.radiusMin, this.config.grid.anchor.radiusMax);
+		var snapPointBorderThickness = this.config.grid.anchor.borderThickness;
 
 		// Calculate view co-ordinates for first (bottom left) snap point
 		var firstSnapPointX = bottomLeftWorkspace.x - (bottomLeftWorkspace.x % snapPointSpacing);
@@ -402,7 +396,7 @@ class CircuitCanvasRenderer
 		var firstSnapPointView = this.workspacePositionToViewPosition({ x: firstSnapPointX, y: firstSnapPointY });
 
 		// Calculate required snap point repeats
-		var snapPointSpacingView = this.config.gridSnapSpacing * zoom;
+		var snapPointSpacingView = this.config.grid.spacing * zoom;
 		var snapPointRepeatsX = Math.floor((topRightView.x - firstSnapPointView.x) / snapPointSpacingView);
 		var snapPointRepeatsY = Math.floor((topRightView.y - firstSnapPointView.y) / snapPointSpacingView);
 
@@ -526,7 +520,7 @@ class CircuitCanvasRenderer
 	modifyZoom(zoomAmount)
 	{
 		var newTargetZoom = this.view.targetZoom * (1 + zoomAmount);
-		this.view.targetZoom = circuit_utils.clamp(newTargetZoom, this.config.minZoom, this.config.maxZoom);
+		this.view.targetZoom = circuit_utils.clamp(newTargetZoom, this.config.zoom.min, this.config.zoom.max);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -630,21 +624,21 @@ class CircuitCanvasRenderer
 
 	getGridSnapSpacing()
 	{
-		return this.config.gridSnapSpacing;
+		return this.config.grid.spacing;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	setGridVisible(visible)
 	{
-		this.config.gridVisible = visible;
+		this.config.grid.isVisible = visible;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	setGridSnapSpacing(spacing)
 	{
-		this.config.gridSnapSpacing = spacing;
+		this.config.grid.spacing = spacing;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
