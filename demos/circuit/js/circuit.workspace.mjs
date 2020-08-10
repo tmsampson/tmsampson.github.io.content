@@ -144,8 +144,7 @@ class CircuitWorkspace
 		var targetComponent = targetPinInfo.component;
 
 		// Validate input pin index
-		var sourcePinType = sourcePinInfo.type, sourcePinIndex = sourcePinInfo.index;
-		var sourceInputArray = (sourcePinType == circuit.PinType.INPUT)? sourceComponent.inputs : sourceComponent.outputs;
+		var sourcePinType = circuit.PinType.OUTPUT, sourcePinIndex = sourcePinInfo.index, sourceInputArray = sourceComponent.outputs;
 		if(sourcePinInfo.index >= sourceInputArray.length)
 		{
 			console.error(`Connection failed. Source ${sourcePinType} pin index ${sourcePinIndex} is invalid.`);
@@ -154,8 +153,7 @@ class CircuitWorkspace
 		} 
 
 		// Validate output pin index
-		var targetPinType = targetPinInfo.type, targetPinIndex = targetPinInfo.index;
-		var targetInputArray = (targetPinType == circuit.PinType.INPUT)? targetComponent.inputs : targetComponent.outputs;
+		var targetPinType = circuit.PinType.INPUT, targetPinIndex = targetPinInfo.index, targetInputArray = targetComponent.inputs;
 		if(targetPinInfo.index >= targetInputArray.length)
 		{
 			console.error(`Connection failed. Target ${targetPinType} pin index ${targetPinIndex} is invalid.`);
@@ -163,18 +161,13 @@ class CircuitWorkspace
 			return false;
 		}
 
-		// Grab connection info
-		var sourcePinIsInput = (sourcePinType == circuit.PinType.INPUT);
-		var inputComponent = sourcePinIsInput? sourceComponent : targetComponent;
-		var outputComponent = sourcePinIsInput? targetComponent : sourceComponent;
-
 		// Check for duplicate connections
-		var inputComponentConnections = this.connections.byInputComponent[inputComponent];
-		if(inputComponentConnections != null)
+		var existingConnections = this.connections.byOutputComponent[sourceComponent];
+		if(existingConnections != null)
 		{
-			for(var inputConnectionIndex = 0; inputConnectionIndex < inputComponentConnections.length; ++inputConnectionIndex)
+			for(var existingConnectionIndex = 0; existingConnectionIndex < existingConnections.length; ++existingConnectionIndex)
 			{
-				var existingConnectionInfo = inputComponentConnections[inputConnectionIndex];
+				var existingConnectionInfo = existingConnections[existingConnectionIndex];
 				if(existingConnectionInfo.targetPinInfo.component == targetComponent)
 				{
 					if(existingConnectionInfo.sourcePinInfo.index == sourcePinIndex && existingConnectionInfo.targetPinInfo.index == targetPinIndex)
@@ -190,21 +183,21 @@ class CircuitWorkspace
 		// Store connection
 		// NOTE: Connections are maintained across several containers for optimal lookup/traversal
 		this.connections.all.push(connectionInfo);
-		if(this.connections.byInputComponent.hasOwnProperty(inputComponent))
+		if(this.connections.byOutputComponent.hasOwnProperty(sourceComponent))
 		{
-			this.connections.byInputComponent[inputComponent].push(connectionInfo);
+			this.connections.byOutputComponent[sourceComponent].push(connectionInfo);
 		}
 		else
 		{
-			this.connections.byInputComponent[inputComponent] = [ connectionInfo ];
+			this.connections.byOutputComponent[sourceComponent] = [ connectionInfo ];
 		}
-		if(this.connections.byOutputComponent.hasOwnProperty(outputComponent))
+		if(this.connections.byInputComponent.hasOwnProperty(targetComponent))
 		{
-			this.connections.byOutputComponent[outputComponent].push(connectionInfo);
+			this.connections.byInputComponent[targetComponent].push(connectionInfo);
 		}
 		else
 		{
-			this.connections.byOutputComponent[outputComponent] = [ connectionInfo ];
+			this.connections.byInputComponent[targetComponent] = [ connectionInfo ];
 		}
 
 		// Log
