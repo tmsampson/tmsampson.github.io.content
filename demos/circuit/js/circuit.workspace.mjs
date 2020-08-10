@@ -168,11 +168,44 @@ class CircuitWorkspace
 		var inputComponent = sourcePinIsInput? sourceComponent : targetComponent;
 		var outputComponent = sourcePinIsInput? targetComponent : sourceComponent;
 
+		// Check for duplicate connections
+		var inputComponentConnections = this.connections.byInputComponent[inputComponent];
+		if(inputComponentConnections != null)
+		{
+			for(var inputConnectionIndex = 0; inputConnectionIndex < inputComponentConnections.length; ++inputConnectionIndex)
+			{
+				var existingConnectionInfo = inputComponentConnections[inputConnectionIndex];
+				if(existingConnectionInfo.targetPinInfo.component == targetComponent)
+				{
+					if(existingConnectionInfo.sourcePinInfo.index == sourcePinIndex && existingConnectionInfo.targetPinInfo.index == targetPinIndex)
+					{
+						// Duplicate detected
+						console.error("Connection failed. Duplicate connection detected");
+						return false;
+					}
+				}
+			}
+		}
+
 		// Store connection
 		// NOTE: Connections are maintained across several containers for optimal lookup/traversal
-		this.connections.all.push(connectionInfo);								// Flat list
-		this.connections.byInputComponent[inputComponent] = connectionInfo;		// Input component --> connectionInfo lookup
-		this.connections.byOutputComponent[outputComponent] = connectionInfo;	// Input component --> connectionInfo lookup
+		this.connections.all.push(connectionInfo);
+		if(this.connections.byInputComponent.hasOwnProperty(inputComponent))
+		{
+			this.connections.byInputComponent[inputComponent].push(connectionInfo);
+		}
+		else
+		{
+			this.connections.byInputComponent[inputComponent] = [ connectionInfo ];
+		}
+		if(this.connections.byOutputComponent.hasOwnProperty(outputComponent))
+		{
+			this.connections.byOutputComponent[outputComponent].push(connectionInfo);
+		}
+		else
+		{
+			this.connections.byOutputComponent[outputComponent] = [ connectionInfo ];
+		}
 
 		// Log
 		var sourceLog = `${sourceComponent.descriptor.name} component (#${sourceComponent.id}) ${sourcePinType} pin ${sourcePinIndex}`;
