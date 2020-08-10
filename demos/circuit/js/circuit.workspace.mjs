@@ -22,9 +22,9 @@ class CircuitWorkspace
 		this.components = [];
 		this.connections =
 		{
-			all: [],               // Flat list
-			byInputComponent: { }, // Input component --> connectionInfo
-			byOutputComponent: { } // Output component --> connectionInfo
+			all: [],                // Flat list
+			byOutputComponent: { }, // Output component ID --> connectionInfo
+			byInputComponent: { }   // Input component ID --> connectionInfo
 		};
 	}
 
@@ -140,8 +140,8 @@ class CircuitWorkspace
 		}
 
 		// Grab components
-		var sourceComponent = sourcePinInfo.component;
-		var targetComponent = targetPinInfo.component;
+		var sourceComponent = sourcePinInfo.component, sourceComponentId = sourceComponent.id;
+		var targetComponent = targetPinInfo.component, targetComponentId = targetComponent.id;
 
 		// Validate input pin index
 		var sourcePinType = circuit.PinType.OUTPUT, sourcePinIndex = sourcePinInfo.index, sourceInputArray = sourceComponent.outputs;
@@ -161,21 +161,17 @@ class CircuitWorkspace
 			return false;
 		}
 
-		// Check for duplicate connections
-		var existingConnections = this.connections.byOutputComponent[sourceComponent];
-		if(existingConnections != null)
+		// Check to ensure target input pin is not already connected
+		var existingInputConnections = this.connections.byInputComponent[targetComponentId];
+		if(existingInputConnections != null)
 		{
-			for(var existingConnectionIndex = 0; existingConnectionIndex < existingConnections.length; ++existingConnectionIndex)
+			for(var existingInputConnectionIndex = 0; existingInputConnectionIndex < existingInputConnections.length; ++existingInputConnectionIndex)
 			{
-				var existingConnectionInfo = existingConnections[existingConnectionIndex];
-				if(existingConnectionInfo.targetPinInfo.component == targetComponent)
+				var existingInputConnectionInfo = existingInputConnections[existingInputConnectionIndex];
+				if(existingInputConnectionInfo.targetPinInfo.index == targetPinIndex)
 				{
-					if(existingConnectionInfo.sourcePinInfo.index == sourcePinIndex && existingConnectionInfo.targetPinInfo.index == targetPinIndex)
-					{
-						// Duplicate detected
-						console.error("Connection failed. Duplicate connection detected");
-						return false;
-					}
+					console.error("Connection failed. Input pins can only have a single connection");
+					return false;
 				}
 			}
 		}
@@ -183,21 +179,21 @@ class CircuitWorkspace
 		// Store connection
 		// NOTE: Connections are maintained across several containers for optimal lookup/traversal
 		this.connections.all.push(connectionInfo);
-		if(this.connections.byOutputComponent.hasOwnProperty(sourceComponent))
+		if(this.connections.byOutputComponent.hasOwnProperty(sourceComponentId))
 		{
-			this.connections.byOutputComponent[sourceComponent].push(connectionInfo);
+			this.connections.byOutputComponent[sourceComponentId].push(connectionInfo);
 		}
 		else
 		{
-			this.connections.byOutputComponent[sourceComponent] = [ connectionInfo ];
+			this.connections.byOutputComponent[sourceComponentId] = [ connectionInfo ];
 		}
-		if(this.connections.byInputComponent.hasOwnProperty(targetComponent))
+		if(this.connections.byInputComponent.hasOwnProperty(targetComponentId))
 		{
-			this.connections.byInputComponent[targetComponent].push(connectionInfo);
+			this.connections.byInputComponent[targetComponentId].push(connectionInfo);
 		}
 		else
 		{
-			this.connections.byInputComponent[targetComponent] = [ connectionInfo ];
+			this.connections.byInputComponent[targetComponentId] = [ connectionInfo ];
 		}
 
 		// Log

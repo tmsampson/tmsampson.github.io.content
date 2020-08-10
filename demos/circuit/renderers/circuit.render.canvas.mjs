@@ -82,7 +82,12 @@ class CircuitCanvasRenderer
 			pinRadius: 3,
 			pinHoverMultiplier: 1.5,
 			pinLineWidth: 2,
-			connectionLineWidth: 4
+			temporaryConnectionLineWidth: 4,
+			temporaryConnectionColour: "#7f0036",
+			regularConnectionColour: "#333333",
+			regularConnectionLineWidth: 4,
+			activeConnectionColour: "#33FF33",
+			activeConnectionLineWidth: 4,
 		};
 
 		// Create canvas
@@ -326,7 +331,7 @@ class CircuitCanvasRenderer
 
 		// Render connections
 		var connections = this.workspace.getConnections();
-		ctx.strokeStyle = "#333333"; ctx.lineWidth = this.config.connectionLineWidth * zoom; ctx.lineCap = "round";
+		ctx.strokeStyle = this.config.regularConnectionColour; ctx.lineWidth = this.config.regularConnectionLineWidth * zoom; ctx.lineCap = "round";
 		for(var connectionIndex = 0; connectionIndex < connections.length; ++connectionIndex)
 		{
 			var connectionInfo = connections[connectionIndex];
@@ -347,7 +352,7 @@ class CircuitCanvasRenderer
 			var connectionStartPositionView = this.workspacePositionToViewPosition(connectionStartPosition);
 			var connectionEndPosition = this.getTemporaryConnectionEndPosition();
 			var connectionEndPositionView = this.workspacePositionToViewPosition(connectionEndPosition);
-			ctx.strokeStyle = "#333333"; ctx.lineWidth = this.config.connectionLineWidth * zoom; ctx.lineCap = "round";
+			ctx.strokeStyle = this.config.temporaryConnectionColour; ctx.lineWidth = this.config.temporaryConnectionLineWidth * zoom; ctx.lineCap = "round";
 			ctx.beginPath();
 			ctx.moveTo(connectionStartPositionView.x, connectionStartPositionView.y);
 			ctx.lineTo(connectionEndPositionView.x, connectionEndPositionView.y);
@@ -369,6 +374,7 @@ class CircuitCanvasRenderer
 			// Render state
 			var stats = `Rendered components: (${renderedComponentCount}/${components.length})`;
 			stats += ` | Rendered pins: (${pinRenderPositions.length}/${totalPinCount})`;
+			stats += ` | Rendered connections: (${connections.length})`;
 			stats += ` | Zoom = ${zoom.toFixed(2)}`;
 			stats += ` | Frame time = ${(averageFrameTimeS * 1000).toFixed(2)}ms (${averageFps} fps)`;
 			ctx.font = "14px Arial"; ctx.fillStyle = "#333333";
