@@ -162,18 +162,10 @@ class CircuitWorkspace
 		}
 
 		// Check to ensure target input pin is not already connected
-		var existingInputConnections = this.connections.byInputComponent[targetComponentId];
-		if(existingInputConnections != null)
+		if(this.isPinConnected(targetPinInfo))
 		{
-			for(var existingInputConnectionIndex = 0; existingInputConnectionIndex < existingInputConnections.length; ++existingInputConnectionIndex)
-			{
-				var existingInputConnectionInfo = existingInputConnections[existingInputConnectionIndex];
-				if(existingInputConnectionInfo.targetPinInfo.index == targetPinIndex)
-				{
-					console.error("Connection failed. Input pins can only have a single connection");
-					return false;
-				}
-			}
+			console.error("Connection failed. Input pins can only have a single connection");
+			return false;
 		}
 
 		// Store connection
@@ -201,6 +193,34 @@ class CircuitWorkspace
 		var targetLog = `${targetComponent.descriptor.name} component (#${targetComponent.id}) ${targetPinType} pin ${targetPinIndex}`;
 		console.log(`Connection added: ${sourceLog} --> ${targetLog}`);
 		return true;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	isPinConnected(pinInfo)
+	{
+		// First check to see if the component has any connections
+		var componentId = pinInfo.component.id;
+		var isInputPin = (pinInfo.type == circuit.PinType.INPUT);
+		var existingConnections = isInputPin? this.connections.byInputComponent[componentId] : this.connections.byOutputComponent[componentId];
+		if(existingConnections == null)
+		{
+			return false;
+		}
+
+		// Check connections to see if this pin is already connected
+		for(var existingConnectionIndex = 0; existingConnectionIndex < existingConnections.length; ++existingConnectionIndex)
+		{
+			var existingConnectionInfo = existingConnections[existingConnectionIndex];
+			var existingPinInfo = isInputPin? existingConnectionInfo.targetPinInfo : existingConnectionInfo.sourcePinInfo;
+			if(existingPinInfo.index == pinInfo.index)
+			{
+				return true;
+			}
+		}
+
+		// Not connected
+		return false
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

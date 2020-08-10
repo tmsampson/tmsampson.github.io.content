@@ -585,18 +585,22 @@ class CircuitCanvasRenderer
 		var outputPinUnderCursor = (this.cursorInfo.outputPinIndex >= 0);
 		if(inputPinUnderCursor || outputPinUnderCursor)
 		{
-			// Snap to pin under cursor
+			// Build pin info
 			var component = this.cursorInfo.component;
 			var pinType = inputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
 			var pinIndex = inputPinUnderCursor? this.cursorInfo.inputPinIndex : this.cursorInfo.outputPinIndex;
 			var pinInfo = { component: component, type: pinType, index: pinIndex };
-			return this.getPinPosition(pinInfo);
+
+			// Prevent snapping to input pins which are already connected
+			if(!inputPinUnderCursor || !this.workspace.isPinConnected(pinInfo))
+			{
+				// Snap to pin under cursor
+				return this.getPinPosition(pinInfo);
+			}
 		}
-		else
-		{
-			// Use end position provided
-			return this.temporaryConnection.end;
-		}
+
+		// Use end position provided
+		return this.temporaryConnection.end;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
