@@ -373,12 +373,12 @@ function onFinishDraggingComponent(x, y)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function onStartDraggingConnection(component, pinType, pinIndex, x, y)
+function onStartDraggingConnection(sourcePinInfo, x, y)
 {
 	onStartDragging();
 
 	// Store connection
-	draggingConnection = { component: component, pinType: pinType, pinIndex: pinIndex };
+	draggingConnection = { sourcePinInfo: sourcePinInfo };
 
 	// Start rendering temporary connection
 	updateDraggingConnection(x, y);
@@ -390,7 +390,7 @@ function updateDraggingConnection(x, y)
 {
 	// Move connection
 	var end = workspaceRenderer.viewPositionToWorkspacePosition({ x: x, y: y });
-	workspaceRenderer.renderTemporaryConnection(draggingConnection.component, draggingConnection.pinType, draggingConnection.pinIndex, end);
+	workspaceRenderer.renderTemporaryConnection(draggingConnection.sourcePinInfo, end);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -409,6 +409,25 @@ function onCancelDraggingConnection()
 function onFinishDraggingConnection()
 {
 	onStopDragging();
+
+	// Check to see if we released on a pin
+	var cursorInfo = workspaceRenderer.getCursorInfo();
+	var haveInputPin = (cursorInfo.inputPinIndex >= 0), haveOutputPin = (cursorInfo.outputPinIndex >= 0);
+	if(haveInputPin || haveOutputPin)
+	{
+		var targetPinType = haveInputPin? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
+		var targetPinIndex = haveInputPin? cursorInfo.inputPinIndex : cursorInfo.outputPinIndex;
+		var connectionInfo =
+		{
+			sourcePinInfo: draggingConnection.sourcePinInfo,
+			targetPinInfo: { component: cursorInfo.component, type: targetPinType, index: targetPinIndex }
+		};
+
+		if(!workspace.addConnection(connectionInfo))
+		{
+			console.error("EDITOR: Connection failed");
+		}
+	}
 
 	// Clear dragged connection
 	draggingConnection = null;
@@ -512,7 +531,8 @@ function onCanvasMouseDown(e)
 			// Start forming connection
 			var pinType = isInputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
 			var pinIndex = isInputPinUnderCursor? cursorInfo.inputPinIndex : cursorInfo.outputPinIndex;
-			onStartDraggingConnection(cursorInfo.component, pinType, pinIndex, e.pageX, e.pageY);
+			var pinInfo = { component: cursorInfo.component, type: pinType, index: pinIndex };
+			onStartDraggingConnection(pinInfo, e.pageX, e.pageY);
 		}
 		else
 		{

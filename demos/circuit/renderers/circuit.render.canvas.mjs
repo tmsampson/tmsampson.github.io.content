@@ -234,7 +234,8 @@ class CircuitCanvasRenderer
 				}
 
 				// Highlight this pin?
-				if(pinUnderCursor || this.isTemporaryConnectionSource(component, circuit.PinType.INPUT, inputPinIndex))
+				var pinInfo = { component: component, type: circuit.PinType.INPUT, index: inputPinIndex };
+				if(pinUnderCursor || this.isTemporaryConnectionSource(pinInfo))
 				{
 					pinHighlightIndices.push(pinRenderPositions.length - 1);
 				}
@@ -270,7 +271,8 @@ class CircuitCanvasRenderer
 				}
 
 				// Highlight this pin?
-				if(pinUnderCursor || this.isTemporaryConnectionSource(component, circuit.PinType.OUTPUT, outputPinIndex))
+				var pinInfo = { component: component, type: circuit.PinType.OUTPUT, index: outputPinIndex };
+				if(pinUnderCursor || this.isTemporaryConnectionSource(pinInfo))
 				{
 					pinHighlightIndices.push(pinRenderPositions.length - 1);
 				}
@@ -322,19 +324,33 @@ class CircuitCanvasRenderer
 			ctx.fill(); ctx.stroke();
 		}
 
+		// Render connections
+		var connections = this.workspace.getConnections();
+		ctx.strokeStyle = "#333333"; ctx.lineWidth = this.config.connectionLineWidth * zoom; ctx.lineCap = "round";
+		for(var connectionIndex = 0; connectionIndex < connections.length; ++connectionIndex)
+		{
+			var connectionInfo = connections[connectionIndex];
+			var connectionStartPosition = this.getPinPosition(connectionInfo.sourcePinInfo);
+			var connectionStartPositionView = this.workspacePositionToViewPosition(connectionStartPosition);
+			var connectionEndPosition = this.getPinPosition(connectionInfo.targetPinInfo);
+			var connectionEndPositionView = this.workspacePositionToViewPosition(connectionEndPosition);
+			ctx.beginPath();
+			ctx.moveTo(connectionStartPositionView.x, connectionStartPositionView.y);
+			ctx.lineTo(connectionEndPositionView.x, connectionEndPositionView.y);
+			ctx.stroke();
+		}
+
 		// Draw temporary connection?
 		if(this.temporaryConnection != null)
 		{
-			var startComponent = this.temporaryConnection.startComponent;
-			var startPinType = this.temporaryConnection.startPinType, startPinIndex = this.temporaryConnection.startPinIndex;
-			var connectionStartPosition = this.getPinPosition(startComponent, startPinType, startPinIndex);
-			var connectionStartView = this.workspacePositionToViewPosition(connectionStartPosition);
-			var connectionEnd = this.getTemporaryConnectionEndPoint();
-			var connectionEndView = this.workspacePositionToViewPosition(connectionEnd);
+			var connectionStartPosition = this.getPinPosition(this.temporaryConnection.sourcePinInfo);
+			var connectionStartPositionView = this.workspacePositionToViewPosition(connectionStartPosition);
+			var connectionEndPosition = this.getTemporaryConnectionEndPosition();
+			var connectionEndPositionView = this.workspacePositionToViewPosition(connectionEndPosition);
 			ctx.strokeStyle = "#333333"; ctx.lineWidth = this.config.connectionLineWidth * zoom; ctx.lineCap = "round";
 			ctx.beginPath();
-			ctx.moveTo(connectionStartView.x, connectionStartView.y);
-			ctx.lineTo(connectionEndView.x, connectionEndView.y);
+			ctx.moveTo(connectionStartPositionView.x, connectionStartPositionView.y);
+			ctx.lineTo(connectionEndPositionView.x, connectionEndPositionView.y);
 			ctx.stroke();
 		}
 
@@ -533,14 +549,14 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	renderTemporaryConnection(component, pinType, pinIndex, end)
+	renderTemporaryConnection(sourcePinInfo, end)
 	{
-		this.temporaryConnection = { startComponent: component, startPinType: pinType, startPinIndex: pinIndex, end: end };
+		this.temporaryConnection = { sourcePinInfo: sourcePinInfo, end: end };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	isTemporaryConnectionSource(component, pinType, pinIndex)
+	isTemporaryConnectionSource(pinInfo)
 	{
 		// Ignore if no temporary connection is active
 		if(this.temporaryConnection == null)
@@ -549,14 +565,14 @@ class CircuitCanvasRenderer
 		}
 
 		// Check if the pin provided is the temporary connection source
-		var startComponent = this.temporaryConnection.startComponent;
-		var startPinType = this.temporaryConnection.startPinType, startPinIndex = this.temporaryConnection.startPinIndex;
-		return (component == startComponent) && (pinType == startPinType) && (pinIndex == startPinIndex);
+		var connectionSourcePinInfo = this.temporaryConnection.sourcePinInfo;
+		var startComponent =  connectionSourcePinInfo.component;
+		return (pinInfo.component == startComponent) && (pinInfo.type == connectionSourcePinInfo.type) && (pinInfo.index == connectionSourcePinInfo.index);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	getTemporaryConnectionEndPoint()
+	getTemporaryConnectionEndPosition()
 	{
 		// Ignore if no temporary connection is active
 		if(this.temporaryConnection == null)
@@ -573,7 +589,8 @@ class CircuitCanvasRenderer
 			var component = this.cursorInfo.component;
 			var pinType = inputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
 			var pinIndex = inputPinUnderCursor? this.cursorInfo.inputPinIndex : this.cursorInfo.outputPinIndex;
-			return this.getPinPosition(component, pinType, pinIndex);
+			var pinInfo = { component: component, type: pinType, index: pinIndex };
+			return this.getPinPosition(pinInfo);
 		}
 		else
 		{
@@ -633,14 +650,15 @@ class CircuitCanvasRenderer
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
-	getPinPosition(component, pinType, pinIndex)
+	getPinPosition(pinInfo)
 	{
+		var component = pinInfo.component;
 		var widget = component.descriptor.widget;
 		var renderImage = widget.getRenderImage(component);
 		var widgetSize = { x: renderImage.width, y: renderImage.height };
 		var componentPosition = component.args.position;
-		var isInputPin = (pinType == circuit.PinType.INPUT);
-		var pinPositionLocal = isInputPin? widget.getInputPinPosition(pinIndex) : widget.getOutputPinPosition(pinIndex);
+		var isInputPin = (pinInfo.type == circuit.PinType.INPUT);
+		var pinPositionLocal = isInputPin? widget.getInputPinPosition(pinInfo.index) : widget.getOutputPinPosition(pinInfo.index);
 		var componentBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
 		return { x: componentBottomLeft.x + pinPositionLocal.x, y: componentBottomLeft.y + pinPositionLocal.y };
 	}
