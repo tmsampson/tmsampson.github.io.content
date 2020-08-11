@@ -110,8 +110,7 @@ class CircuitWorkspace
 		var connectionResult = circuit_utils.validateObject(connectionInfo, ["sourcePinInfo", "targetPinInfo"], []);
 		if(!connectionResult.value)
 		{
-			console.error(`Connection failed. Invalid connection object: ${connectionResult.message}`);
-			return false;
+			return { value: false, message: `Invalid connection object: ${connectionResult.message}` };
 		}
 
 		// Validate source pin
@@ -119,8 +118,7 @@ class CircuitWorkspace
 		var sourcePinResult = circuit_utils.validateObject(sourcePinInfo, ["component", "type", "index"], []);
 		if(!sourcePinResult.value)
 		{
-			console.error(`Connection failed. Invalid source pin info: ${sourcePinResult.message}`);
-			return false;
+			return { value: false, message: `Invalid source pin info: ${sourcePinResult.message}` };
 		}
 
 		// Validate target pin
@@ -128,15 +126,13 @@ class CircuitWorkspace
 		var targetPinResult = circuit_utils.validateObject(targetPinInfo, ["component", "type", "index"], []);
 		if(!targetPinResult.value)
 		{
-			console.error(`Connection failed. Invalid target pin info: ${targetPinResult.message}`);
-			return false;
+			return { value: false, message: `Invalid target pin info: ${targetPinResult.message}` };
 		}
 
 		// For now, only allow connecting outputs to inputs
 		if(sourcePinInfo.type != circuit.PinType.OUTPUT || targetPinInfo.type != circuit.PinType.INPUT)
 		{
-			console.error(`Connection failed. For now, connections must go from output pin to input pin only`);
-			return false;
+			return { value: false, message: `Connections must go from output pin to input pin.` };
 		}
 
 		// Grab components
@@ -147,25 +143,20 @@ class CircuitWorkspace
 		var sourcePinType = circuit.PinType.OUTPUT, sourcePinIndex = sourcePinInfo.index, sourceInputArray = sourceComponent.outputs;
 		if(sourcePinInfo.index >= sourceInputArray.length)
 		{
-			console.error(`Connection failed. Source ${sourcePinType} pin index ${sourcePinIndex} is invalid.`);
-			console.error(`Component only has ${sourceInputArray.length} ${sourcePinType} pins!"`);
-			return false;
+			return { value: false, message: `Source ${sourcePinType} pin index ${sourcePinIndex} is invalid.` };
 		} 
 
 		// Validate output pin index
 		var targetPinType = circuit.PinType.INPUT, targetPinIndex = targetPinInfo.index, targetInputArray = targetComponent.inputs;
 		if(targetPinInfo.index >= targetInputArray.length)
 		{
-			console.error(`Connection failed. Target ${targetPinType} pin index ${targetPinIndex} is invalid.`);
-			console.error(`Component only has ${targetInputArray.length} pins!"`);
-			return false;
+			return { value: false, message: `Target ${targetPinType} pin index ${targetPinIndex} is invalid.` };
 		}
 
 		// Check to ensure target input pin is not already connected
 		if(this.isPinConnected(targetPinInfo))
 		{
-			console.error("Connection failed. Input pins can only have a single connection");
-			return false;
+			return { value: false, message: "Input pins can only have a single connection." };
 		}
 
 		// Store connection
@@ -192,7 +183,7 @@ class CircuitWorkspace
 		var sourceLog = `${sourceComponent.descriptor.name} component (#${sourceComponent.id}) ${sourcePinType} pin ${sourcePinIndex}`;
 		var targetLog = `${targetComponent.descriptor.name} component (#${targetComponent.id}) ${targetPinType} pin ${targetPinIndex}`;
 		console.log(`Connection added: ${sourceLog} --> ${targetLog}`);
-		return true;
+		return { value: true, message: "" };
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

@@ -168,3 +168,18 @@ body
 	-ms-user-select: none; /* Internet Explorer/Edge */
 	user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 }
+
+.errorDialog
+{
+	background-image: url("img/error_icon.png");
+	background-position: 6px 6px;
+	background-repeat: no-repeat;
+	padding-left:30px;
+	padding-top:6px;
+	font-size:14px;
+}
+
+.errorDialog .ui-dialog-titlebar
+{
+	display: none;
+}

@@ -1,5 +1,3 @@
-☐ Prevent snapping to connected input pins
-☐ Implement page alert for failed connections etc
 ☐ Start rendering connections: https://github.com/pkorac/cardinal-spline-js
 ☐ Implement simulation!
 ☐ Implement component info pane

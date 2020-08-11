@@ -22,7 +22,7 @@ function validateObject(object, requiredFields, requiredFunctions)
 		var fieldName = requiredFields[i];
 		if(!object.hasOwnProperty(fieldName))
 		{
-			return { value: false, message: `Required field '${fieldName}' was not found`};
+			return { value: false, message: `Required field '${fieldName}' was not found.`};
 		}
 	}
 
@@ -32,7 +32,7 @@ function validateObject(object, requiredFields, requiredFunctions)
 		var functionName = requiredFunctions[i];
 		if(!(typeof object[functionName] === 'function'))
 		{
-			return { value: false, message: `Required function '${functionName}' was not found`};
+			return { value: false, message: `Required function '${functionName}' was not found.`};
 		}
 	}
 	

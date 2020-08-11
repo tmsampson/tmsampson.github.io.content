@@ -25,11 +25,12 @@ var circuitRoot = "./";
 var config = 
 {
 	gridSnapSpacing: 100,
+	messagePanel: { width: 650, height:46, padding: 30, timeout: 5000 }
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Components
-var componentPicker = null, settingsPanel = null;
+var componentPicker = null, settingsPanel = null, messagePanel = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Data
@@ -45,6 +46,7 @@ var draggingComponentPickerItemIcon = null;
 var draggingComponent = null;
 var draggingComponentOriginalPosition = { };
 var draggingConnection = null;
+var messagePanelTimer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Init
@@ -72,6 +74,9 @@ async function init()
 
 	// Setup toolbar
 	initSettingsPanel();
+
+	// Setup message panel
+	initMessagePanel();
 
 	// Grab canvas container
 	canvasContainer = $("#editor_canvas_container");
@@ -102,7 +107,7 @@ async function init()
 	workspaceCanvas = $("#editor_canvas_container canvas");
 
 	// Setup renderer defaults
-	workspaceRenderer.setGridSnapSpacing(100);
+	workspaceRenderer.setGridSnapSpacing(config.gridSnapSpacing);
 	workspaceRenderer.setGridVisible(getEditorSettingValue(EditorSettings.GRID_MODE) == EditorSettings.GRID_MODE_SHOW);
 	workspaceRenderer.setShowRenderStats(getEditorSettingValue(EditorSettings.RENDER_STATS) == EditorSettings.RENDER_STATS_ENABLED);
 
@@ -197,6 +202,41 @@ function initComponentPicker()
 	draggingComponentPickerItemIcon = $("<div id='editor_component_picker_item_drag_icon'></div>");
 	$("body").append(draggingComponentPickerItemIcon);
 	return;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function initMessagePanel()
+{
+	var messagePanelShowEffect = { effect: "slideDown", duration: 100 }, messagePanelHideEffect = { effect: "slideUp", duration: 100 };
+	messagePanel = $("#editor_message_panel");
+	messagePanel.dialog({ width: config.messagePanel.width, height: config.messagePanel.height, closeOnEscape: true, autoOpen: false, show: messagePanelShowEffect, hide: messagePanelHideEffect });
+	messagePanel.dialog("option", "dialogClass", "errorDialog");
+	$("div[aria-describedby='editor_message_panel']").offset({ top: config.messagePanel.padding });
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function showError(message)
+{
+	// Show message panel
+	var content = `<b>ERROR</b>: ${message}`;
+	messagePanel.html(content);
+	messagePanel.dialog("open");
+
+	// Ensure messasge window is centred
+	var windowWidth = $(window).width();
+	var left = (windowWidth * 0.5) - (config.messagePanel.width * 0.5);
+	$("div[aria-describedby='editor_message_panel']").offset({ top: config.messagePanel.padding, left: left });
+
+	// Clear existing timer?
+	if(messagePanelTimer != null)
+	{
+		clearTimeout(messagePanelTimer);
+	}
+
+	// Set timer
+	messagePanelTimer = setTimeout(() => { messagePanel.dialog("close") }, config.messagePanel.timeout);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -410,11 +450,12 @@ function onFinishDraggingConnection()
 {
 	onStopDragging();
 
-	// Check to see if we released on a pin
+	// Check to see if the cursor was released over a pin
 	var cursorInfo = workspaceRenderer.getCursorInfo();
 	var haveInputPin = (cursorInfo.inputPinIndex >= 0), haveOutputPin = (cursorInfo.outputPinIndex >= 0);
 	if(haveInputPin || haveOutputPin)
 	{
+		// Build connection info
 		var targetPinType = haveInputPin? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
 		var targetPinIndex = haveInputPin? cursorInfo.inputPinIndex : cursorInfo.outputPinIndex;
 		var connectionInfo =
@@ -423,9 +464,11 @@ function onFinishDraggingConnection()
 			targetPinInfo: { component: cursorInfo.component, type: targetPinType, index: targetPinIndex }
 		};
 
-		if(!workspace.addConnection(connectionInfo))
+		// Attempt connection
+		var result = workspace.addConnection(connectionInfo);
+		if(!result.value)
 		{
-			console.error("EDITOR: Connection failed");
+			showError(`Connection failed: ${result.message}`);
 		}
 	}
 
