@@ -587,11 +587,21 @@ function onCanvasMouseDown(e)
 	{
 		if(isPinUnderCursor)
 		{
-			// Start forming connection
+			// Grab pin info
 			var pinType = isInputPinUnderCursor? circuit.PinType.INPUT : circuit.PinType.OUTPUT;
 			var pinIndex = isInputPinUnderCursor? cursorInfo.inputPinIndex : cursorInfo.outputPinIndex;
 			var pinInfo = { component: cursorInfo.component, type: pinType, index: pinIndex };
-			onStartDraggingConnection(pinInfo, e.pageX, e.pageY);
+
+			if(e.ctrlKey)
+			{
+				// Attempt to destroy connection
+				workspace.removeConnections(pinInfo);
+			}
+			else
+			{
+				// Start forming connection
+				onStartDraggingConnection(pinInfo, e.pageX, e.pageY);
+			}
 		}
 		else
 		{

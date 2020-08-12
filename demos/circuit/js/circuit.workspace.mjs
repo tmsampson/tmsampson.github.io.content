@@ -26,6 +26,8 @@ class CircuitWorkspace
 			byOutputComponent: { }, // Output component ID --> connectionInfo
 			byInputComponent: { }   // Input component ID --> connectionInfo
 		};
+		this.nextComponentId = 0;
+		this.nextConnectionId = 0;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -99,7 +101,7 @@ class CircuitWorkspace
 	generateComponentId()
 	{
 		// For now, just use a counter
-		return this.components.length;
+		return this.nextComponentId++;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
@@ -159,6 +161,9 @@ class CircuitWorkspace
 			return { value: false, message: "Input pins can only have a single connection." };
 		}
 
+		// Assign connection ID
+		connectionInfo.id = this.generateConnectionId();
+
 		// Store connection
 		// NOTE: Connections are maintained across several containers for optimal lookup/traversal
 		this.connections.all.push(connectionInfo);
@@ -188,6 +193,61 @@ class CircuitWorkspace
 
 	// ---------------------------------------------------------------------------------------------------------------------
 
+	removeConnections(pinInfo)
+	{
+		var component = pinInfo.component, componentId = component.id;
+		var pinIndex = pinInfo.index, isInputPin = (pinInfo.type == circuit.PinType.INPUT);
+		for(var connectionIndex = (this.connections.all.length - 1); connectionIndex >= 0 ; --connectionIndex)
+		{
+			var connectionInfo = this.connections.all[connectionIndex];
+			var connectionPinInfo = isInputPin? connectionInfo.targetPinInfo : connectionInfo.sourcePinInfo;
+			if(connectionPinInfo.component == component && connectionPinInfo.index == pinIndex)
+			{
+				// Remove from flat array
+				this.connections.all.splice(connectionIndex, 1);
+
+				// Grab source/target pin info
+				var sourcePinInfo = connectionInfo.sourcePinInfo, targetPinInfo = connectionInfo.targetPinInfo;
+				var sourceComponent = sourcePinInfo.component, targetComponent = targetPinInfo.component;
+				var removeConnectionId = connectionInfo.id;
+
+				// Remove from "output" lookup container
+				var existingOutputConnections = this.connections.byOutputComponent[sourceComponent.id];
+				if(existingOutputConnections != null)
+				{
+					existingOutputConnections = existingOutputConnections.filter(connectionInfo => (connectionInfo.id != removeConnectionId));
+					this.connections.byOutputComponent[sourceComponent.id] = existingOutputConnections;
+				}
+				if(existingOutputConnections.length == 0)
+				{
+					delete this.connections.byOutputComponent[sourceComponent.id];
+				}
+
+				// Remove from "input" lookup container
+				var existingInputConnections = this.connections.byInputComponent[targetComponent.id];
+				if(existingInputConnections != null)
+				{
+					existingInputConnections = existingInputConnections.filter(connectionInfo => (connectionInfo.id != removeConnectionId));
+					this.connections.byInputComponent[targetComponent.id] = existingInputConnections;
+				}
+				if(existingInputConnections.length == 0)
+				{
+					delete this.connections.byInputComponent[targetComponent.id];
+				}
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	generateConnectionId()
+	{
+		// For now, just use a counter
+		return this.nextConnectionId++;
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+	// Misc
 	isPinConnected(pinInfo)
 	{
 		// First check to see if the component has any connections
@@ -222,10 +282,64 @@ class CircuitWorkspace
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
-
+	// Main update
 	update()
 	{
+		var processingQueue = [];
 
+		// For all components...
+		for(var componentIndex = 0; componentIndex < this.components.length; ++componentIndex)
+		{
+			var component = this.components[componentIndex];
+
+			// Reset *all* input pins
+			for(var inputPinIndex = 0; inputPinIndex < component.inputs.length; ++inputPinIndex)
+			{
+				component.inputs[inputPinIndex] = false;
+			}
+
+			// Adding all components with no input connections to the processing queue
+			if(component.inputs.length == 0 || (this.connections.byInputComponent[component.id] == null))
+			{
+				processingQueue.push(component);
+			}
+		}
+
+		// Start processing queue
+		for(var queueIndex = 0; queueIndex < processingQueue.length; ++queueIndex)
+		{
+			// Update source component
+			// NOTE: Input pins should already be set
+			var component = processingQueue[queueIndex];
+			component.update();
+
+			// Apply source component outputs to all outgoing connections
+			// NOTE: Output pins should now be set
+			var outgoingConnections = this.connections.byOutputComponent[component.id];
+			if(outgoingConnections != null)
+			{
+				for(var connectionIndex = 0; connectionIndex < outgoingConnections.length; ++connectionIndex)
+				{
+					var outgoingConnectionInfo = outgoingConnections[connectionIndex];
+					var sourcePinInfo = outgoingConnectionInfo.sourcePinInfo;
+					var targetPinInfo = outgoingConnectionInfo.targetPinInfo;
+					var targetComponent = targetPinInfo.component;
+					targetComponent.inputs[targetPinInfo.index] = component.outputs[sourcePinInfo.index];
+
+					// Add target component to processing queue?
+					if(!processingQueue.includes(targetComponent))
+					{
+						processingQueue.push(targetComponent);
+					}
+				}
+			}
+
+			// Add processing index (for debugging)
+			if(!component.hasOwnProperty("debug"))
+			{
+				component.debug = { visitIndex: queueIndex };
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------

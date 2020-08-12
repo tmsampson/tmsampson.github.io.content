@@ -1,15 +1,4 @@
-☐ Start rendering connections: https://github.com/pkorac/cardinal-spline-js
-☐ Implement simulation!
-	☐ Find all components with no input pins --> add to queue
-	☐ Find all component with no connected inputs --> add to queue
-	☐ For each item in queue...
-		☐ Add debug object to component instance (if none present)
-		☐ Call evaluate on component
-		☐ For each output connection
-			☐ Update input pin
-			☐ Add component to processing queue (if not present)
 ☐ Implement component info pane
-☐ Implement removing connections (ctrl+click)
 ☐ Implement re-route component
 ☐ Implement LED component
 ☐ Implement serialisation
