@@ -81,7 +81,7 @@ class CircuitCanvasRenderer
 				anchor:
 				{
 					radius: 3,
-					radiusMin: 2,
+					radiusMin: 1,
 					radiusMax: 6,
 					borderThickness: 1,
 					fillColour: "#fff5f5",
