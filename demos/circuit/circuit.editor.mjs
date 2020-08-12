@@ -25,7 +25,7 @@ var circuitRoot = "./";
 var config = 
 {
 	gridSnapSpacing: 100,
-	messagePanel: { width: 650, height:46, padding: 30, timeout: 5000 }
+	messagePanel: { width: 540, height:46, padding: 30, timeout: 5000 }
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -226,8 +226,9 @@ function showError(message)
 
 	// Ensure messasge window is centred
 	var windowWidth = $(window).width();
-	var left = (windowWidth * 0.5) - (config.messagePanel.width * 0.5);
-	$("div[aria-describedby='editor_message_panel']").offset({ top: config.messagePanel.padding, left: left });
+	var positionTop = config.messagePanel.padding;
+	var positionLeft = (windowWidth * 0.5) - (config.messagePanel.width * 0.5);
+	$("div[aria-describedby='editor_message_panel']").offset({ top: positionTop, left: positionLeft });
 
 	// Clear existing timer?
 	if(messagePanelTimer != null)
