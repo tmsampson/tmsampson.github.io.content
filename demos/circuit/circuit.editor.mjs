@@ -24,6 +24,7 @@ var circuitRoot = "./";
 // Config
 var config = 
 {
+	updateFrequency: 5,
 	gridSnapSpacing: 130,
 	messagePanel: { width: 540, height:46, padding: 30, timeout: 5000 }
 };
@@ -116,7 +117,21 @@ async function init()
 	workspaceCanvas.on("mouseup", (e) => onCanvasMouseUp(e));
 	workspaceCanvas.on("mousedown", (e) => onCanvasMouseDown(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
+
+	// Kick-off update
+	setTimeout(updateWorkspace, (1.0 / config.updateFrequency) * 1000);
 	return true;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function updateWorkspace()
+{
+	// Update workspace
+	workspace.update();
+
+	// Schedule next update
+	setTimeout(updateWorkspace, (1.0 / config.updateFrequency) * 1000);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

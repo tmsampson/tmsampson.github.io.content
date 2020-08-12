@@ -17,7 +17,7 @@ class PowerSource
 	constructor()
 	{
 		this.inputs = [ ];
-		this.outputs = [true];
+		this.outputs = [ true ];
 	}
 
 	update()

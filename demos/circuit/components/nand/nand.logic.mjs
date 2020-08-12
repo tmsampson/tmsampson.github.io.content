@@ -17,7 +17,7 @@ class Nand
 	constructor()
 	{
 		this.inputs = [ false, false ];
-		this.outputs = [false];
+		this.outputs = [ false ];
 	}
 
 	update()
