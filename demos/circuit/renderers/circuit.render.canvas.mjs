@@ -174,8 +174,8 @@ class CircuitCanvasRenderer
 	{
 		// Clear canvas
 		var ctx = this.ctx;
-		var viewAABB = { lowerBound: { x: 0, y: 0 }, upperBound: { x: this.canvas.width, y: this.canvas.height } };
-		ctx.clearRect(viewAABB.lowerBound.x, viewAABB.lowerBound.y, viewAABB.upperBound.x, viewAABB.upperBound.y);
+		var viewportAABB = { lowerBound: { x: 0, y: 0 }, upperBound: { x: this.canvas.width, y: this.canvas.height } };
+		ctx.clearRect(viewportAABB.lowerBound.x, viewportAABB.lowerBound.y, viewportAABB.upperBound.x, viewportAABB.upperBound.y);
 
 		// Clear cursor info
 		this.cursorInfo.component = null;
@@ -191,8 +191,8 @@ class CircuitCanvasRenderer
 		// Render components
 		var zoom = this.view.zoom;
 		var components = this.workspace.components;
-		var pinRadiusView = this.config.pin.radius * zoom, pinHoverRadiusView = pinRadiusView * this.config.pin.radiusHoverMultiplier;
-		var pinRenderData = [], pinHighlightIndices = [], renderedComponentCount = 0, totalPinCount = 0;
+		var pinRadiusView = this.config.pin.radius * zoom;
+		var pinRenderList = [], pinHighlightIndices = [], renderedComponentCount = 0, totalPinCount = 0;
 		for(var componentIndex = 0; componentIndex < components.length; ++componentIndex)
 		{
 			// Skip components without a position
@@ -228,7 +228,7 @@ class CircuitCanvasRenderer
 			var widgetWorkspacePositionBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
 			var widgetViewPositionBottomLeft = this.workspacePositionToViewPosition(widgetWorkspacePositionBottomLeft);
 			var widgetViewSize = { x: widgetSize.x * zoom, y: widgetSize.y * zoom };
-			var widgetViewAABB =
+			var widgetAABBView =
 			{
 				lowerBound: widgetViewPositionBottomLeft,
 				upperBound: { x: widgetViewPositionBottomLeft.x + widgetViewSize.x, y: widgetViewPositionBottomLeft.y + widgetViewSize.y }
@@ -237,134 +237,47 @@ class CircuitCanvasRenderer
 			// Update pin counts
 			totalPinCount += (component.inputs.length + component.outputs.length);
 
-			// Gather input pins
-			var mouseoverAABB = widgetViewAABB;
+			// Process input pins
+			var mouseoverAABB = widgetAABBView;
 			for(var inputPinIndex = 0; inputPinIndex < component.inputs.length; ++inputPinIndex)
 			{
-				// Grab pin info
-				var pinValue = component.inputs[inputPinIndex];
-				var pinPositionLocal = widget.getInputPinPosition(inputPinIndex);
-
-				// Setup pin render data
-				var renderData =
-				{
-					positionView:
-					{
-						x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom),
-						y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom)
-					},
-					value: pinValue
-				};
-
-				// Skip pins outside of view
-				var pinAABBView = this.getPinAABB(renderData.positionView, pinRadiusView);
-				if(!circuit_utils.overlapAABB(pinAABBView, viewAABB))
-				{
-					continue;
-				}
-
-				// Store pin for rendering
-				pinRenderData.push(renderData);
-
-				// Check for mouse-over input pin?
-				var pinUnderCursor = false;
-				if((this.cursorInfo.component == null) && (this.cursorInfo.inputPinIndex == -1))
-				{
-					var pinHoverAABBView = this.getPinAABB(renderData.positionView, pinHoverRadiusView);
-					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
-					{
-						this.cursorInfo.component = component;
-						this.cursorInfo.inputPinIndex = inputPinIndex;
-						pinUnderCursor = true;
-					}
-				}
-
-				// Highlight this pin?
 				var pinInfo = { component: component, type: circuit.PinType.INPUT, index: inputPinIndex };
-				if(pinUnderCursor || this.isTemporaryConnectionSource(pinInfo))
-				{
-					pinHighlightIndices.push(pinRenderData.length - 1);
-				}
+				this.processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
 			}
 
-			// Gather output pins
+			// Process output pins
 			for(var outputPinIndex = 0; outputPinIndex < component.outputs.length; ++outputPinIndex)
 			{
-				// Grab pin info
-				var pinValue = component.outputs[outputPinIndex];
-				var pinPositionLocal = widget.getOutputPinPosition(outputPinIndex);
-
-				// Setup pin render data
-				var renderData =
-				{
-					positionView:
-					{
-						x: widgetViewAABB.lowerBound.x + (pinPositionLocal.x * zoom),
-						y: widgetViewAABB.lowerBound.y + (pinPositionLocal.y * zoom)
-					},
-					value: pinValue
-				};
-
-				// Skip pins outside of view
-				var pinAABBView = this.getPinAABB(renderData.positionView, pinRadiusView);
-				if(!circuit_utils.overlapAABB(pinAABBView, viewAABB))
-				{
-					continue;
-				}
-
-				// Store pin for rendering
-				pinRenderData.push(renderData);
-
-				// Check for mouse-over output pin?
-				var pinUnderCursor = false;
-				if((this.cursorInfo.component == null) && (this.cursorInfo.outputPinIndex == -1))
-				{
-					var pinHoverAABBView = this.getPinAABB(renderData.positionView, pinHoverRadiusView);
-					if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
-					{
-						this.cursorInfo.component = component;
-						this.cursorInfo.outputPinIndex = outputPinIndex;
-						pinUnderCursor = true;
-					}
-				}
-
-				// Highlight this pin?
 				var pinInfo = { component: component, type: circuit.PinType.OUTPUT, index: outputPinIndex };
-				if(pinUnderCursor || this.isTemporaryConnectionSource(pinInfo))
-				{
-					pinHighlightIndices.push(pinRenderData.length - 1);
-				}
+				this.processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
 			}
 
 			// Skip components outside of view
-			if(!circuit_utils.overlapAABB(widgetViewAABB, viewAABB))
+			if(!circuit_utils.overlapAABB(widgetAABBView, viewportAABB))
 			{
 				continue;
 			}
 
 			// Calculate widget size
-			var widgetWidthView = (widgetViewAABB.upperBound.x - widgetViewAABB.lowerBound.x);
-			var widgetHeightView = (widgetViewAABB.upperBound.y - widgetViewAABB.lowerBound.y);
+			var widgetWidthView = (widgetAABBView.upperBound.x - widgetAABBView.lowerBound.x);
+			var widgetHeightView = (widgetAABBView.upperBound.y - widgetAABBView.lowerBound.y);
 
 			// Draw widget image
 			var widgetImage = imageDescriptor.loadedImage;
-			ctx.drawImage(widgetImage, widgetViewAABB.lowerBound.x, widgetViewAABB.lowerBound.y, widgetWidthView, widgetHeightView);
+			ctx.drawImage(widgetImage, widgetAABBView.lowerBound.x, widgetAABBView.lowerBound.y, widgetWidthView, widgetHeightView);
 			++renderedComponentCount;
 
 			// Check if component is under cursor
-			if(this.cursorInfo.component == null)
+			if((this.cursorInfo.component == null) && circuit_utils.pointInsideAABB(this.cursorInfo.positionView, mouseoverAABB))
 			{
-				if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, mouseoverAABB))
-				{
-					this.cursorInfo.component = component;
-				}
+				this.cursorInfo.component = component;
 			}
 		}
 
 		// Draw pins
-		for(var inputPinIndex = 0; inputPinIndex < pinRenderData.length; ++inputPinIndex)
+		for(var inputPinIndex = 0; inputPinIndex < pinRenderList.length; ++inputPinIndex)
 		{
-			var renderData = pinRenderData[inputPinIndex];
+			var renderData = pinRenderList[inputPinIndex];
 			var pinDrawConfig = renderData.value? this.config.pin.active : this.config.pin.regular;
 			ctx.strokeStyle = pinDrawConfig.lineColour; ctx.fillStyle = pinDrawConfig.fillColour; ctx.lineWidth = pinDrawConfig.lineWidth;
 			ctx.beginPath();
@@ -377,7 +290,7 @@ class CircuitCanvasRenderer
 		for(var hoveredPinEntry = 0; hoveredPinEntry < pinHighlightIndices.length; ++ hoveredPinEntry)
 		{
 			var hoveredPinIndex = pinHighlightIndices[hoveredPinEntry];
-			var renderData = pinRenderData[hoveredPinIndex];
+			var renderData = pinRenderList[hoveredPinIndex];
 			ctx.beginPath();
 			ctx.arc(renderData.positionView.x, renderData.positionView.y, pinRadiusView, 0.0, tau);
 			ctx.fill(); ctx.stroke();
@@ -434,12 +347,70 @@ class CircuitCanvasRenderer
 
 			// Render state
 			var stats = `Rendered components: (${renderedComponentCount}/${components.length})`;
-			stats += ` | Rendered pins: (${pinRenderData.length}/${totalPinCount})`;
+			stats += ` | Rendered pins: (${pinRenderList.length}/${totalPinCount})`;
 			stats += ` | Rendered connections: (${connections.length})`;
 			stats += ` | Zoom = ${zoom.toFixed(2)}`;
 			stats += ` | Frame time = ${(averageFrameTimeS * 1000).toFixed(2)}ms (${averageFps} fps)`;
 			ctx.font = "14px Arial"; ctx.fillStyle = "#333333";
 			ctx.fillText(stats, 10, this.canvas.height - 11);
+		}
+	}
+
+	processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices)
+	{
+		// Grab pin info
+		var component = pinInfo.component;
+		var pinIndex = pinInfo.index, pinIsInput = (pinInfo.type == circuit.PinType.INPUT);
+		var pinValue = pinIsInput? component.inputs[pinIndex] : component.outputs[pinIndex];
+		var pinPositionLocal = pinIsInput? widget.getInputPinPosition(pinIndex) : widget.getOutputPinPosition(pinIndex);
+
+		// Setup pin render data
+		var pinRenderData =
+		{
+			positionView:
+			{
+				x: widgetAABBView.lowerBound.x + (pinPositionLocal.x * this.view.zoom),
+				y: widgetAABBView.lowerBound.y + (pinPositionLocal.y * this.view.zoom)
+			},
+			value: pinValue
+		};
+
+		// Skip pins outside of view
+		var pinAABBView = this.getPinAABB(pinRenderData.positionView, pinRadiusView);
+		if(!circuit_utils.overlapAABB(pinAABBView, viewportAABB))
+		{
+			return;
+		}
+
+		// Store pin for rendering
+		pinRenderList.push(pinRenderData);
+
+		// Check for mouse-over pin?
+		var pinUnderCursor = false;
+		var cursorPinIndex = pinIsInput? this.cursorInfo.inputPinIndex : this.cursorInfo.outputPinIndex;
+		if((this.cursorInfo.component == null) && (cursorPinIndex == -1))
+		{
+			var pinHoverRadiusView = pinRadiusView * this.config.pin.radiusHoverMultiplier
+			var pinHoverAABBView = this.getPinAABB(pinRenderData.positionView, pinHoverRadiusView);
+			if(circuit_utils.pointInsideAABB(this.cursorInfo.positionView, pinHoverAABBView))
+			{
+				this.cursorInfo.component = component;
+				if(pinIsInput)
+				{
+					this.cursorInfo.inputPinIndex = pinIndex;
+				}
+				else
+				{
+					this.cursorInfo.outputPinIndex = pinIndex;
+				}
+				pinUnderCursor = true;
+			}
+		}
+
+		// Highlight this pin?
+		if(pinUnderCursor || this.isTemporaryConnectionSource(pinInfo))
+		{
+			pinHighlightIndices.push(pinRenderList.length - 1);
 		}
 	}
 
