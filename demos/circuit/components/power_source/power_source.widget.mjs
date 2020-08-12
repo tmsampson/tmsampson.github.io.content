@@ -24,12 +24,12 @@ class PowerSourceWidget
 {
 	getRenderImage(component)
 	{
-		return { image: "power_source", width: 60, height: 60 };
+		return { image: "power_source", width: 85.8, height: 85.8 };
 	}
 
 	getOutputPinPosition(outputPinIndex)
 	{
-		return { x: 63, y: 30 };
+		return { x: 90.09, y: 42.9 };
 	}
 }
 

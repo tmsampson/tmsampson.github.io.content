@@ -24,21 +24,21 @@ class NandWidget
 {
 	getRenderImage(component)
 	{
-		return { image: "nand", width: 54, height: 40 };
+		return { image: "nand", width: 77.22, height: 57.2 };
 	}
 
 	getInputPinPosition(inputPinIndex)
 	{
 		switch(inputPinIndex)
 		{
-			case 0: return { x: 0, y: 10.35 };
-			case 1: return { x: 0, y: 29.65 };
+			case 0: return { x: 0, y: 14.79 };
+			case 1: return { x: 0, y: 42.41 };
 		}
 	}
 
 	getOutputPinPosition(outputPinIndex)
 	{
-		return { x: 56.8, y: 20 };
+		return { x: 81.22, y: 28.6 };
 	}
 }
 

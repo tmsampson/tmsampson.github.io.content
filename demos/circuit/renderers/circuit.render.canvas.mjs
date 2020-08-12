@@ -74,13 +74,26 @@ class CircuitCanvasRenderer
 		this.config =
 		{
 			zoom: { min: 0.2, max: 25.0, speed: 0.15 },
-			grid: { isVisible: true, spacing: 100, anchor: { radius: 3, radiusMin: 2, radiusMax: 6, borderThickness: 1 } },
-			pin: { radius: 3.0, radiusHoverMultiplier: 1.5, lineWidth: 2 },
+			grid:
+			{
+				isVisible: true,
+				spacing: 100,
+				anchor:
+				{
+					radius: 3,
+					radiusMin: 2,
+					radiusMax: 6,
+					borderThickness: 1,
+					fillColour: "#fff5f5",
+					lineColour: "#9c2c52"
+				}
+			},
+			pin: { radius: 4.29, radiusHoverMultiplier: 1.8, lineWidth: 2 },
 			connection:
 			{
 				temporary: { colour: "#7f0036", lineWidth: 4 },
 				regular: { colour: "#333333", lineWidth: 4 },
-				active: { colour: "#333333", lineWidth: 4 },
+				active: { colour: "#333333", lineWidth: 4 }
 			}
 		};
 
@@ -402,7 +415,7 @@ class CircuitCanvasRenderer
 
 		// Setup render state
 		var ctx = this.ctx;
-		ctx.fillStyle = "#e9e9e9"; ctx.strokeStyle = "#808080";
+		ctx.fillStyle = this.config.grid.anchor.fillColour; ctx.strokeStyle = this.config.grid.anchor.lineColour;
 		ctx.lineWidth = snapPointBorderThickness;
 
 		// Render visible snap points

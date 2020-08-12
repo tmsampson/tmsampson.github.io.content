@@ -24,7 +24,7 @@ var circuitRoot = "./";
 // Config
 var config = 
 {
-	gridSnapSpacing: 100,
+	gridSnapSpacing: 130,
 	messagePanel: { width: 540, height:46, padding: 30, timeout: 5000 }
 };
 
