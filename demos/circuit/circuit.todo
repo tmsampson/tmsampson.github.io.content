@@ -1,4 +1,9 @@
+☐ Tidy up LED component
+☐ Check what happens when connecting a node to itself
+☐ Implement re-route node
+☐ Implement switch (and ability for widgets to receive click events)
+☐ Implement curved connection rendering
+☐ Implement component rotation
 ☐ Implement component info pane
-☐ Implement re-route component
-☐ Implement LED component
 ☐ Implement serialisation
+☐ Implement page full of serialised circuits
