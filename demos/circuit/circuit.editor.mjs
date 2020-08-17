@@ -117,6 +117,7 @@ async function init()
 	workspaceCanvas.on("mouseup", (e) => onCanvasMouseUp(e));
 	workspaceCanvas.on("mousedown", (e) => onCanvasMouseDown(e));
 	$(document).on("mousemove", (e) => onMouseMove(e));
+	$(document).keydown((e) => onKeyDown(e));
 
 	// Kick-off update
 	setTimeout(updateWorkspace, (1.0 / config.updateFrequency) * 1000);
@@ -285,6 +286,21 @@ function onMouseMove(e)
 		var isComponentUnderCursor = (cursorInfo.component != null);
 		var isPinUnderCursor = ((cursorInfo.inputPinIndex >= 0) || (cursorInfo.outputPinIndex >= 0));
 		setCursor(isPinUnderCursor? "crosshair" : (isComponentUnderCursor? "grab" : "default"));
+	}
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function onKeyDown(e)
+{
+	var KEY_R = 82;
+	switch(e.which)
+	{
+		case KEY_R:
+		{
+			console.log("Rotate");
+			break;
+		}
 	}
 }
 
