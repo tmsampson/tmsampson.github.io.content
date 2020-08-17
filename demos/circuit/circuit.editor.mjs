@@ -50,6 +50,10 @@ var draggingConnection = null;
 var messagePanelTimer = null;
 
 // -------------------------------------------------------------------------------------------------------------------------
+// Keys
+var KEY_R = 82;
+
+// -------------------------------------------------------------------------------------------------------------------------
 // Init
 window.onload = function()
 {
@@ -293,12 +297,18 @@ function onMouseMove(e)
 
 function onKeyDown(e)
 {
-	var KEY_R = 82;
+	// Grab cursor info
+	var cursorInfo = workspaceRenderer.getCursorInfo();
+
+	// Handle key press
 	switch(e.which)
 	{
 		case KEY_R:
 		{
-			console.log("Rotate");
+			if(cursorInfo.component)
+			{
+				RotateComponent(cursorInfo.component);
+			}
 			break;
 		}
 	}
@@ -634,6 +644,20 @@ function snapPositionToGrid(workspacePosition)
 	var spacing = workspaceRenderer.getGridSnapSpacing();
 	var gridX = Math.round(workspacePosition.x / spacing), gridY = Math.round(workspacePosition.y / spacing);
 	return { x: (gridX * spacing), y: (gridY * spacing) };
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+function RotateComponent(component)
+{
+	// Add rotation arg if not already present
+	if(!component.args.hasOwnProperty("rotation"))
+	{
+		component.args.rotation = 0;
+	}
+
+	// Apply rotation
+	component.args.rotation = (component.args.rotation + 1) % 4;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

@@ -203,6 +203,9 @@ class CircuitCanvasRenderer
 				continue;
 			}
 
+			// Calculate component rotation
+			var componentRotation = (component.args.rotation || 0) * (Math.PI * 0.5);
+
 			// Skip components without a valid widget
 			var widget = component.descriptor.widget;
 			if(widget == null)
@@ -242,14 +245,14 @@ class CircuitCanvasRenderer
 			for(var inputPinIndex = 0; inputPinIndex < component.inputs.length; ++inputPinIndex)
 			{
 				var pinInfo = { component: component, type: circuit.PinType.INPUT, index: inputPinIndex };
-				this.processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
+				this.processPin(pinInfo, widget, widgetSize, widgetAABBView, componentRotation, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
 			}
 
 			// Process output pins
 			for(var outputPinIndex = 0; outputPinIndex < component.outputs.length; ++outputPinIndex)
 			{
 				var pinInfo = { component: component, type: circuit.PinType.OUTPUT, index: outputPinIndex };
-				this.processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
+				this.processPin(pinInfo, widget, widgetSize, widgetAABBView, componentRotation, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices);
 			}
 
 			// Skip components outside of view
@@ -259,13 +262,21 @@ class CircuitCanvasRenderer
 			}
 
 			// Calculate widget size
-			var widgetWidthView = (widgetAABBView.upperBound.x - widgetAABBView.lowerBound.x);
-			var widgetHeightView = (widgetAABBView.upperBound.y - widgetAABBView.lowerBound.y);
+			var widgetWidthView = (widgetAABBView.upperBound.x - widgetAABBView.lowerBound.x), widgetHalfWidthView = (widgetWidthView * 0.5);
+			var widgetHeightView = (widgetAABBView.upperBound.y - widgetAABBView.lowerBound.y), widgetHalfHeightView = (widgetHeightView * 0.5);
+
+			// Apply rotation
+			ctx.translate(widgetAABBView.lowerBound.x + widgetHalfWidthView, widgetAABBView.lowerBound.y + widgetHalfHeightView)
+			ctx.rotate(componentRotationAngle);
+			ctx.translate(-widgetHalfWidthView, -widgetHalfHeightView);
 
 			// Draw widget image
 			var widgetImage = imageDescriptor.loadedImage;
-			ctx.drawImage(widgetImage, widgetAABBView.lowerBound.x, widgetAABBView.lowerBound.y, widgetWidthView, widgetHeightView);
+			ctx.drawImage(widgetImage, 0, 0, widgetWidthView, widgetHeightView);
 			++renderedComponentCount;
+
+			// Reset transform
+			ctx.resetTransform();
 
 			// Check if component is under cursor
 			if((this.cursorInfo.component == null) && circuit_utils.pointInsideAABB(this.cursorInfo.positionView, mouseoverAABB))
@@ -356,21 +367,22 @@ class CircuitCanvasRenderer
 		}
 	}
 
-	processPin(pinInfo, widget, widgetAABBView, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices)
+	processPin(pinInfo, widget, widgetSize, widgetAABBView, rotation, viewportAABB, pinRadiusView, pinRenderList, pinHighlightIndices)
 	{
 		// Grab pin info
 		var component = pinInfo.component;
 		var pinIndex = pinInfo.index, pinIsInput = (pinInfo.type == circuit.PinType.INPUT);
 		var pinValue = pinIsInput? component.inputs[pinIndex] : component.outputs[pinIndex];
 		var pinPositionLocal = pinIsInput? widget.getInputPinPosition(pinIndex) : widget.getOutputPinPosition(pinIndex);
+		var pinPositionLocalRotated = this.getPinPositionRotated(pinPositionLocal, widgetSize, rotation);
 
 		// Setup pin render data
 		var pinRenderData =
 		{
 			positionView:
 			{
-				x: widgetAABBView.lowerBound.x + (pinPositionLocal.x * this.view.zoom),
-				y: widgetAABBView.lowerBound.y + (pinPositionLocal.y * this.view.zoom)
+				x: widgetAABBView.lowerBound.x + (pinPositionLocalRotated.x * this.view.zoom),
+				y: widgetAABBView.lowerBound.y + (pinPositionLocalRotated.y * this.view.zoom)
 			},
 			value: pinValue
 		};
@@ -701,8 +713,25 @@ class CircuitCanvasRenderer
 		var componentPosition = component.args.position;
 		var isInputPin = (pinInfo.type == circuit.PinType.INPUT);
 		var pinPositionLocal = isInputPin? widget.getInputPinPosition(pinInfo.index) : widget.getOutputPinPosition(pinInfo.index);
+		var rotation = (component.args.rotation || 0.0) * (Math.PI * 0.5);
+		var pinPositionLocalRotated = this.getPinPositionRotated(pinPositionLocal, widgetSize, rotation);
 		var componentBottomLeft = { x: componentPosition.x - (widgetSize.x * 0.5), y: componentPosition.y - (widgetSize.y * 0.5) };
-		return { x: componentBottomLeft.x + pinPositionLocal.x, y: componentBottomLeft.y + pinPositionLocal.y };
+		return { x: componentBottomLeft.x + pinPositionLocalRotated.x, y: componentBottomLeft.y + pinPositionLocalRotated.y };
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------
+
+	getPinPositionRotated(pinPositionLocal, widgetSize, rotation)
+	{
+		var sinTheta =  Math.sin(rotation), cosTheta = Math.cos(rotation);
+		var rotationOffset = { x: widgetSize.x * 0.5, y: widgetSize.y * 0.5 };
+		pinPositionLocal.x -= rotationOffset.x; pinPositionLocal.y -= rotationOffset.y;
+		var pinPositionLocalRotated =
+		{
+			x: (pinPositionLocal.x * cosTheta - pinPositionLocal.y * sinTheta) + rotationOffset.x,
+			y: (pinPositionLocal.y * cosTheta + pinPositionLocal.x * sinTheta) + rotationOffset.y
+		};
+		return pinPositionLocalRotated;
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------------
