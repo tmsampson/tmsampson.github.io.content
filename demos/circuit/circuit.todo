@@ -1,7 +1,5 @@
-☐ Implement switch (and ability for widgets to receive click events)
 ☐ Implement re-route node
-☐ Implement curved connection rendering
-☐ Implement component rotation
 ☐ Implement component info pane
+☐ Implement curved connection rendering
 ☐ Implement serialisation
 ☐ Implement page full of serialised circuits

@@ -5,40 +5,43 @@ import * as circuit_render from "../../js/circuit.render.mjs";
 // -------------------------------------------------------------------------------------------------------------------------
 // Register
 circuit_render.registerComponentWidget({
-	name: "nand",
-	displayName: "NAND",
-	description: "Nand gate",
-	category: "Gates",
+	name: "switch_spst",
+	displayName: "Switch (SPST)",
+	description: "Single Pole Single Throw Switch",
+	category: "Switches",
 	images:
 	{
-		"nand" : { file: "nand.svg" },
+		"switch_open" : { file: "switch_spst_open.svg" },
+		"switch_closed" : { file: "switch_spst_closed.svg" },
 	},
-	icon: { file: "nand_icon.png" },
+	icon: { file: "switch_spst_icon.png" },
 	version: "1.0.0.0",
-	create: () => new NandWidget()
+	create: () => new SwitchSPSTWidget()
 });
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Implementation
-class NandWidget
+class SwitchSPSTWidget
 {
 	getRenderImage(component)
 	{
-		return { image: "nand", width: 77.22, height: 57.2 };
+		var renderImage = component.isOpen()? "switch_open" : "switch_closed";
+		return { image: renderImage, width: 90, height: 90 };
 	}
 
 	getInputPinPosition(inputPinIndex)
 	{
-		switch(inputPinIndex)
-		{
-			case 0: return { x: 0, y: 14.79 };
-			case 1: return { x: 0, y: 42.41 };
-		}
+		return { x: 13.78, y: 45.3 };
 	}
 
 	getOutputPinPosition(outputPinIndex)
 	{
-		return { x: 81.22, y: 28.6 };
+		return { x: 76.22, y: 45.3 };
+	}
+
+	onClick(component)
+	{
+		component.toggleState();
 	}
 }
 

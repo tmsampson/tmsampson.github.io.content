@@ -46,6 +46,7 @@ var draggingComponentPickerItem = null;
 var draggingComponentPickerItemIcon = null;
 var draggingComponent = null;
 var draggingComponentOriginalPosition = { };
+var draggingComponentMoved = false;
 var draggingConnection = null;
 var messagePanelTimer = null;
 
@@ -419,6 +420,7 @@ function onStartDraggingComponent(component, x, y)
 	// Store dragged component
 	draggingComponentOriginalPosition = workspace.getComponentPosition(component);
 	draggingComponent = component;
+	draggingComponentMoved = false
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -426,6 +428,7 @@ function onStartDraggingComponent(component, x, y)
 function updateDraggingComponent(x, y)
 {
 	// Move dragged component
+	draggingComponentMoved = true;
 	var cursorPostionWorkspace = cursorPositionToWorkspacePosition(x, y);
 	workspace.setComponentPosition(draggingComponent, cursorPostionWorkspace);
 }
@@ -441,6 +444,7 @@ function onCancelDraggingComponent(x, y)
 
 	// Clear dragged component
 	draggingComponent = null;
+	draggingComponentMoved = false;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -449,8 +453,19 @@ function onFinishDraggingComponent(x, y)
 {
 	onStopDragging();
 
+	// Raise component click event?
+	if(!draggingComponentMoved)
+	{
+		var widget = draggingComponent.descriptor.widget;
+		if(widget != null && (typeof widget["onClick"] === 'function'))
+		{
+			widget.onClick(draggingComponent);
+		}
+	}
+
 	// Clear dragged component
 	draggingComponent = null;
+	draggingComponentMoved = false;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

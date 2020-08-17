@@ -267,7 +267,7 @@ class CircuitCanvasRenderer
 
 			// Apply rotation
 			ctx.translate(widgetAABBView.lowerBound.x + widgetHalfWidthView, widgetAABBView.lowerBound.y + widgetHalfHeightView)
-			ctx.rotate(componentRotationAngle);
+			ctx.rotate(componentRotation);
 			ctx.translate(-widgetHalfWidthView, -widgetHalfHeightView);
 
 			// Draw widget image
