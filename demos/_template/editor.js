@@ -242,6 +242,17 @@ var editor =
 	},
 
 	// -------------------------------------------------------------------------------------------------------------------------
+
+	drawCircle : function(ctx, position, radius, fillColour, lineColour, lineThickness)
+	{
+		var viewPos = editor.worldToView(position);
+		ctx.fillStyle = fillColour; ctx.strokeStyle = lineColour; ctx.lineWidth = lineThickness;
+		ctx.beginPath();
+		ctx.arc(viewPos.x, viewPos.y, radius * editor.view.zoom, 0.0, editor.constants.tau);
+		ctx.fill(); ctx.stroke();
+	},
+
+	// -------------------------------------------------------------------------------------------------------------------------
 	// Utils
 	util :
 	{
