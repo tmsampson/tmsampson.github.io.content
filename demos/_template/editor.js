@@ -209,14 +209,13 @@ var editor =
 		editor.view.panning.isActive = false;
 		editor.canvas.element.style.cursor = "default";
 	},
-
 	// ---------------------------------------------------------------------------------------------------------------------
 
 	worldToView : function(worldPosition)
 	{
 		var canvasCentre = { x: editor.canvas.element.width * 0.5, y: editor.canvas.element.height * 0.5 };
 		var canvasX = canvasCentre.x + (worldPosition.x + editor.view.focus.x) * editor.view.zoom;
-		var canvasY = canvasCentre.y + (worldPosition.y + editor.view.focus.y) * editor.view.zoom;
+		var canvasY = canvasCentre.y + (-worldPosition.y + editor.view.focus.y) * editor.view.zoom;
 		return { x: canvasX, y: canvasY };
 	},
 
@@ -226,7 +225,7 @@ var editor =
 	{
 		var canvasCentre = { x: editor.canvas.element.width * 0.5, y: editor.canvas.element.height * 0.5 };
 		var worldX = ((canvasPosition.x - canvasCentre.x) / editor.view.zoom) - editor.view.focus.x;
-		var worldY = ((canvasPosition.y - canvasCentre.y) / editor.view.zoom) - editor.view.focus.y;
+		var worldY = -((canvasPosition.y - canvasCentre.y) / editor.view.zoom) - editor.view.focus.y;
 		return { x: worldX, y: worldY };
 	},
 
@@ -267,3 +266,25 @@ var editor =
 		}
 	}
 };
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Vector math
+var vector =
+{
+	add : function(v0, v1)
+	{
+		return { x: v0.x + v1.x, y: v0.y + v1.y, z: v0.z + v1.z };
+	},
+	
+	multiply : function(v0, v1)
+	{
+		return { x: v0.x * v1.x, y: v0.y * v1.y, z: v0.z * v1.z };
+	},
+	
+	multiplyScalar : function(v0, s)
+	{
+		return { x: v0.x * s, y: v0.y * s, z: v0.z * s };
+	}
+};
+
+// -------------------------------------------------------------------------------------------------------------------------
