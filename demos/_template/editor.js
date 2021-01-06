@@ -257,6 +257,18 @@ var editor =
 	},
 
 	// -------------------------------------------------------------------------------------------------------------------------
+
+	drawLine : function(ctx, start, end, lineColour, lineThickness)
+	{
+		var startView = editor.worldToView(start), endView = editor.worldToView(end);
+		ctx.strokeStyle = lineColour; ctx.lineWidth = lineThickness;
+		ctx.beginPath();
+		ctx.moveTo(startView.x, startView.y);
+		ctx.lineTo(endView.x, endView.y);
+		ctx.stroke();
+	},
+
+	// -------------------------------------------------------------------------------------------------------------------------
 	// Utils
 	util :
 	{
@@ -269,8 +281,12 @@ var editor =
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Vector math
-var vector =
+var vec3 =
 {
+	right   : { x: 1, y: 0, z: 0 },
+	up      : { x: 0, y: 1, z: 0 },
+	forward : { x: 0, y: 0, z: 1 },
+
 	add : function(v0, v1)
 	{
 		return { x: v0.x + v1.x, y: v0.y + v1.y, z: v0.z + v1.z };
@@ -284,6 +300,30 @@ var vector =
 	multiplyScalar : function(v0, s)
 	{
 		return { x: v0.x * s, y: v0.y * s, z: v0.z * s };
+	},
+	
+	length: function(v0)
+	{
+		return Math.sqrt((v0.x * v0.x) + (v0.y * v0.y) + (v0.z * v0.z));
+	},
+
+	normalise : function(v0)
+	{
+		var length = vec3.length(v0);
+		return { x: v0.x / length, y: v0.y / length, z: v0.z / length };
+	},
+
+	dot : function(v0, v1)
+	{
+		return vec3.multiply(v0, v1);
+	},
+
+	cross : function(v0, v1)
+	{
+		var x = (v0.y * v1.z) - (v0.z * v1.y);
+		var y = (v0.z * v1.x) - (v0.x * v1.z);
+		var z = (v0.x * v1.y) - (v0.y * v1.x);
+		return { x: x, y: y, z: z };
 	}
 };
 
