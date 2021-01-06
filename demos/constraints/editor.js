@@ -272,6 +272,16 @@ var editor =
 	// Utils
 	util :
 	{
+		min : function(x, y)
+		{
+			return Math.min(x, y);
+		},
+
+		max : function(x, y)
+		{
+			return Math.max(x, y);
+		},
+
 		clamp : function(x, min, max)
 		{
 			return Math.min(Math.max(x, min), max);
@@ -283,6 +293,7 @@ var editor =
 // Vector math
 var vec3 =
 {
+	zero    : { x: 0, y: 0, z: 0 },
 	right   : { x: 1, y: 0, z: 0 },
 	up      : { x: 0, y: 1, z: 0 },
 	forward : { x: 0, y: 0, z: 1 },
@@ -290,6 +301,11 @@ var vec3 =
 	add : function(v0, v1)
 	{
 		return { x: v0.x + v1.x, y: v0.y + v1.y, z: v0.z + v1.z };
+	},
+
+	subtract : function(v0, v1)
+	{
+		return { x: v0.x - v1.x, y: v0.y - v1.y, z: v0.z - v1.z };
 	},
 	
 	multiply : function(v0, v1)
@@ -315,7 +331,7 @@ var vec3 =
 
 	dot : function(v0, v1)
 	{
-		return vec3.multiply(v0, v1);
+		return (v0.x * v1.x) + (v0.y * v1.y) + (v0.z * v1.z);
 	},
 
 	cross : function(v0, v1)
@@ -324,6 +340,13 @@ var vec3 =
 		var y = (v0.z * v1.x) - (v0.x * v1.z);
 		var z = (v0.x * v1.y) - (v0.y * v1.x);
 		return { x: x, y: y, z: z };
+	},
+
+	reflect : function(v0, v1)
+	{
+		var normal = vec3.normalise(v1);
+		var x = vec3.multiplyScalar(normal, 2.0 * vec3.dot(normal, v0));
+		return vec3.subtract(v0, x);
 	}
 };
 

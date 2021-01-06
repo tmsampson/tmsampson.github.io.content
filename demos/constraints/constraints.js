@@ -9,6 +9,7 @@ window.onload = function()
 // Config
 var config =
 {
+	maxTimestep : 1 / 30,               // s
 	gravity : { x: 0, y: -9.8, z : 0 }, // ms^2
 	pixelsPerMeter : 100
 };
@@ -25,13 +26,16 @@ var physicsEnabled = true;
 function onInit()
 {
 	// Setup boundaries
-	collisionPlanes.push(createCollisionPlane({ x: 0, y: -400, z: 0 }, { x: 0, y: 1, z: 0 }));  // top
-	collisionPlanes.push(createCollisionPlane({ x: 0, y: 400, z: 0 }, { x: 0, y: -1, z: 0 }));  // bottom
-	collisionPlanes.push(createCollisionPlane({ x: -880, y: 0, z: 0 }, { x: 1, y: 0, z: 0 })); // left
-	collisionPlanes.push(createCollisionPlane({ x: 880, y: 0, z: 0 }, { x: -1, y: 0, z: 0 })); // right
+	var boundaryWidth = 890, boundaryHeight = 400, boundaryColour = "#444444";
+	collisionPlanes.push(createCollisionPlane({ x: 0, y: -boundaryHeight, z: 0 }, { x: 0, y: 1, z: 0 }, boundaryColour)); // top
+	collisionPlanes.push(createCollisionPlane({ x: 0, y: boundaryHeight, z: 0 }, { x: 0, y: -1, z: 0 }, boundaryColour)); // bottom
+	collisionPlanes.push(createCollisionPlane({ x: -boundaryWidth, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, boundaryColour));  // left
+	collisionPlanes.push(createCollisionPlane({ x: boundaryWidth, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }, boundaryColour));  // right
 
 	// Setup bodies
-	bodies.push(createBody({ x: 0, y: 200, z: 0 }, 20, 1, "#ff0000"));
+	bodies.push(createBody({ x: 0, y: 200, z: 0 }, vec3.zero, 20, 1, 1, "#ff0000"));
+	bodies.push(createBody({ x: 100, y: 200, z: 0 }, { x: 10, y: 0, z: 0 }, 20, 1, 1, "#00ff00"));
+	bodies.push(createBody({ x: -100, y: 200, z: 0 }, { x: -10, y: 0, z: 0 }, 20, 1, 1, "#0000ff"));
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -49,14 +53,21 @@ function onUpdate(deltaS)
 
 function updatePhysics(deltaS)
 {
+	// Clamp timestep
+	deltaS = editor.util.min(deltaS, config.maxTimestep);
+
 	// Calculate gravity acceleration
 	var gravityAcceleration = config.gravity;
 
 	// Integrate bodies
 	for(var bodyIndex = 0; bodyIndex < bodies.length; ++bodyIndex)
 	{
-		// Apply ongoing forces
+		// Cache off existing values
 		var body = bodies[bodyIndex];
+		body.previous.position = body.position;
+		body.previous.linearVelocity = body.linearVelocity;
+
+		// Apply ongoing forces
 		body.acceleration = gravityAcceleration;
 
 		// Integrate velocity
@@ -68,6 +79,23 @@ function updatePhysics(deltaS)
 
 		// Integrate position
 		body.position = vec3.add(body.position, vec3.multiplyScalar(body.linearVelocity, config.pixelsPerMeter * deltaS));
+
+		// Solve collisions (planes)
+		for(var planeIndex = 0; planeIndex < collisionPlanes.length; ++planeIndex)
+		{
+			var plane = collisionPlanes[planeIndex];
+			var planeToBody = vec3.subtract(body.position, plane.position);
+			var distanceToPlane = vec3.dot(planeToBody, plane.normal) - body.scale.x;
+			if(distanceToPlane < 0)
+			{
+				body.position = vec3.subtract(body.position, vec3.multiplyScalar(plane.normal, distanceToPlane));
+				if(body.bounciness > 0)
+				{
+					body.linearVelocity = vec3.reflect(body.linearVelocity, plane.normal);           // bounce
+					body.linearVelocity = vec3.multiplyScalar(body.linearVelocity, body.bounciness); // dampen
+				}
+			}
+		}
 	}
 }
 
@@ -85,7 +113,7 @@ function onRender(ctx, canvasWidth, canvasHeight, deltaS)
 		var lineDir = vec3.cross(plane.normal, vec3.forward);
 		var lineStart = vec3.add(plane.position, vec3.multiplyScalar(lineDir, -10000000));
 		var lineEnd = vec3.add(plane.position, vec3.multiplyScalar(lineDir, 10000000));
-		editor.drawLine(ctx, lineStart, lineEnd, "#444444", 5);
+		editor.drawLine(ctx, lineStart, lineEnd, plane.renderData.colour, 5);
 	}
 
 	// Render bodies
@@ -98,7 +126,7 @@ function onRender(ctx, canvasWidth, canvasHeight, deltaS)
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function createBody(position, scale, mass, colour)
+function createBody(position, linearVelocity, scale, mass, bounciness, colour)
 {
 	var body =
 	{
@@ -106,20 +134,22 @@ function createBody(position, scale, mass, colour)
 		scale          : { x: scale, y: scale, z: 0.0 },
 		mass           : mass,
 		massInverse    : 1.0 / mass,
-		linearVelocity : { x: 0, y: 0, z: 0 },
+		linearVelocity : linearVelocity,
 		linearDrag     : 0.01,
 		acceleration   : { x: 0, y: 0, z: 0 },
-		renderData     : { colour : colour }
+		bounciness     : bounciness,
+		renderData     : { colour : colour },
+		previous       : { position: position, linearVelocity: linearVelocity }
 	};
 	return body;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
 
-function createCollisionPlane(position, normal)
+function createCollisionPlane(position, normal, colour)
 {
 	var safeNormal = vec3.normalise(normal);
-	return { position: position, normal: safeNormal };
+	return { position: position, normal: safeNormal, renderData: { colour: colour } };
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
