@@ -2,8 +2,15 @@
 // Entry point
 window.onload = function()
 {
-	editor.init("template app", onUpdate, onRender);
+	editor.init("template app", onInit, onUpdate, onRender);
 };
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Init
+function onInit()
+{
+
+}
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Update

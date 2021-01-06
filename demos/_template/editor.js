@@ -58,16 +58,18 @@ var editor =
 	app :
 	{
 		name           : "{APP_NAME}",
+		initCallback   : null,
 		updateCallback : null,
 		renderCallback : null
 	},
 
 	// -------------------------------------------------------------------------------------------------------------------------
 
-	init : function(name, updateCallback, renderCallback)
+	init : function(name, initCallback, updateCallback, renderCallback)
 	{
 		// Store app info
 		editor.app.name = name;
+		editor.app.initCallback = initCallback;
 		editor.app.updateCallback = updateCallback;
 		editor.app.renderCallback = renderCallback;
 
@@ -98,6 +100,9 @@ var editor =
 
 		// Make sure canvas container resizes with screen
 		$(window).resize(() => editor.resizeCanvasContainer());
+
+		// Init app
+		editor.app.initCallback();
 
 		// Start game loop
 		var previousTimestamp, firstFrame = true;
