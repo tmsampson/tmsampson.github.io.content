@@ -11,7 +11,8 @@ var config =
 {
 	maxTimestep : 1 / 30,               // s
 	gravity : { x: 0, y: -9.8, z : 0 }, // ms^2
-	pixelsPerMeter : 100
+	pixelsPerMeter : 100,
+	testRoll: false
 };
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -29,13 +30,13 @@ function onInit()
 	var boundaryWidth = 890, boundaryHeight = 400, boundaryColour = "#444444";
 	collisionPlanes.push(createCollisionPlane({ x: 0, y: -boundaryHeight, z: 0 }, { x: 0, y: 1, z: 0 }, boundaryColour)); // top
 	collisionPlanes.push(createCollisionPlane({ x: 0, y: boundaryHeight, z: 0 }, { x: 0, y: -1, z: 0 }, boundaryColour)); // bottom
-	collisionPlanes.push(createCollisionPlane({ x: -boundaryWidth, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, boundaryColour));  // left
-	collisionPlanes.push(createCollisionPlane({ x: boundaryWidth, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }, boundaryColour));  // right
+	collisionPlanes.push(createCollisionPlane({ x: -boundaryWidth, y: 0, z: 0 }, { x: 0.5, y: 0.5, z: 0 }, boundaryColour));  // left
+	collisionPlanes.push(createCollisionPlane({ x: boundaryWidth, y: 0, z: 0 }, { x: -0.5, y: 0.5, z: 0 }, boundaryColour));  // right
 
 	// Setup bodies
-	bodies.push(createBody({ x: 0, y: 200, z: 0 }, vec3.zero, 20, 1, 1, "#ff0000"));
-	bodies.push(createBody({ x: 100, y: 200, z: 0 }, { x: 10, y: 0, z: 0 }, 20, 1, 1, "#00ff00"));
-	bodies.push(createBody({ x: -100, y: 200, z: 0 }, { x: -10, y: 0, z: 0 }, 20, 1, 1, "#0000ff"));
+	bodies.push(createBody({ x: 0, y: 200, z: 0 }, vec3.zero, 20, 1, 0.8, "#ff0000"));
+	bodies.push(createBody({ x: 100, y: 200, z: 0 }, { x: 10, y: 0, z: 0 }, 20, 1, 0.8, "#00ff00"));
+	bodies.push(createBody({ x: -100, y: 200, z: 0 }, { x: -10, y: 0, z: 0 }, 20, 1, 0.8, "#0000ff"));
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -56,6 +57,9 @@ function updatePhysics(deltaS)
 	// Clamp timestep
 	deltaS = editor.util.min(deltaS, config.maxTimestep);
 
+	// Apply time dilation
+	deltaS *= 1.0;
+
 	// Calculate gravity acceleration
 	var gravityAcceleration = config.gravity;
 
@@ -74,7 +78,7 @@ function updatePhysics(deltaS)
 		body.linearVelocity = vec3.add(body.linearVelocity, vec3.multiplyScalar(body.acceleration, deltaS));
 
 		// Apply drag
-		var dragScalar = 1.0 - body.linearDrag;
+		var dragScalar = 1.0 - (body.linearDrag * deltaS);
 		body.linearVelocity = vec3.multiplyScalar(body.linearVelocity, dragScalar);
 
 		// Integrate position
@@ -88,11 +92,22 @@ function updatePhysics(deltaS)
 			var distanceToPlane = vec3.dot(planeToBody, plane.normal) - body.scale.x;
 			if(distanceToPlane < 0)
 			{
+				// Snap back to nearest point on correct side of plane
+				var posBefore = body.position;
 				body.position = vec3.subtract(body.position, vec3.multiplyScalar(plane.normal, distanceToPlane));
-				if(body.bounciness > 0)
+
+				if(config.testRoll)
 				{
-					body.linearVelocity = vec3.reflect(body.linearVelocity, plane.normal);           // bounce
-					body.linearVelocity = vec3.multiplyScalar(body.linearVelocity, body.bounciness); // dampen
+					// Test (makes roll work)
+					var delta = vec3.subtract(body.position, posBefore);
+					body.linearVelocity = vec3.add(body.linearVelocity, delta);
+				}
+				else
+				{
+					// Apply bounce
+					var bounciness = editor.util.max(body.bounciness, 0);
+					body.linearVelocity = vec3.reflect(body.linearVelocity, plane.normal);      // bounce
+					body.linearVelocity = vec3.multiplyScalar(body.linearVelocity, bounciness); // dampen
 				}
 			}
 		}
@@ -135,7 +150,7 @@ function createBody(position, linearVelocity, scale, mass, bounciness, colour)
 		mass           : mass,
 		massInverse    : 1.0 / mass,
 		linearVelocity : linearVelocity,
-		linearDrag     : 0.01,
+		linearDrag     : 0.6, // %age energy lost over 1s
 		acceleration   : { x: 0, y: 0, z: 0 },
 		bounciness     : bounciness,
 		renderData     : { colour : colour },
